@@ -83,7 +83,10 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func openSettings(_ sender: Any?) {
-        onOpenSettings()
+        // Avoid presenting windows while NSStatusBar menu tracking is still unwinding.
+        DispatchQueue.main.async { [onOpenSettings] in
+            onOpenSettings()
+        }
     }
 
     @objc private func toggleWidget(_ sender: NSMenuItem) {

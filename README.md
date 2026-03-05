@@ -86,8 +86,8 @@ make dmg-all
 Generated DMG filenames:
 
 ```text
-dist/wewi-1.0.0-arm64.dmg
-dist/wewi-1.0.0-x86_64.dmg
+dist/wewi-1.0.1-arm64.dmg
+dist/wewi-1.0.1-x86_64.dmg
 ```
 
 ## 🧱 Project Structure

@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="wewi"
+APP_VERSION="${APP_VERSION:-1.0.1}"
+APP_BUILD="${APP_BUILD:-2}"
 ARCH="${ARCH:-}"
 APP_BUNDLE_NAME="${APP_BUNDLE_NAME:-$APP_NAME}"
 APP_DIR="$ROOT_DIR/dist/$APP_BUNDLE_NAME.app"
@@ -38,9 +40,9 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundleIdentifier</key>
   <string>com.elixirevo.wewi</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>${APP_BUILD}</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0.0</string>
+  <string>${APP_VERSION}</string>
   <key>CFBundleExecutable</key>
   <string>wewi</string>
   <key>CFBundleIconFile</key>
