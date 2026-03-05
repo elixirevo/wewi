@@ -3,8 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="wewi"
-APP_VERSION="${APP_VERSION:-1.0.1}"
-APP_BUILD="${APP_BUILD:-2}"
+APP_VERSION="${APP_VERSION:-1.0.2}"
+APP_BUILD="${APP_BUILD:-3}"
+SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 ARCH="${ARCH:-}"
 APP_BUNDLE_NAME="${APP_BUNDLE_NAME:-$APP_NAME}"
 APP_DIR="$ROOT_DIR/dist/$APP_BUNDLE_NAME.app"
@@ -12,20 +13,34 @@ CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
-BUILD_ARGS=(-c release)
-if [[ -n "$ARCH" ]]; then
-  BUILD_ARGS+=(--arch "$ARCH")
-fi
-
-swift build "${BUILD_ARGS[@]}"
-BIN_PATH="$(swift build "${BUILD_ARGS[@]}" --show-bin-path)"
-
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
 
-cp "$BIN_PATH/$APP_NAME" "$MACOS_DIR/$APP_NAME"
-chmod +x "$MACOS_DIR/$APP_NAME"
+if [[ "$ARCH" == "universal" ]]; then
+  swift build -c release --arch arm64
+  ARM_BIN_PATH="$(swift build -c release --arch arm64 --show-bin-path)"
+
+  swift build -c release --arch x86_64
+  X86_BIN_PATH="$(swift build -c release --arch x86_64 --show-bin-path)"
+
+  lipo -create \
+    "$ARM_BIN_PATH/$APP_NAME" \
+    "$X86_BIN_PATH/$APP_NAME" \
+    -output "$MACOS_DIR/$APP_NAME"
+  chmod +x "$MACOS_DIR/$APP_NAME"
+else
+  BUILD_ARGS=(-c release)
+  if [[ -n "$ARCH" ]]; then
+    BUILD_ARGS+=(--arch "$ARCH")
+  fi
+
+  swift build "${BUILD_ARGS[@]}"
+  BIN_PATH="$(swift build "${BUILD_ARGS[@]}" --show-bin-path)"
+  cp "$BIN_PATH/$APP_NAME" "$MACOS_DIR/$APP_NAME"
+  chmod +x "$MACOS_DIR/$APP_NAME"
+fi
+
 cp "$ROOT_DIR/icon.png" "$RESOURCES_DIR/icon.png"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
@@ -58,5 +73,15 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
+
+if [[ "$SIGN_IDENTITY" == "-" ]]; then
+  echo "Signing app with ad-hoc identity (-)."
+  codesign --force --deep --sign - "$APP_DIR"
+else
+  echo "Signing app with identity: $SIGN_IDENTITY"
+  codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP_DIR"
+fi
+
+codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
 echo "App bundle created: $APP_DIR"

@@ -3,17 +3,18 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="wewi"
-APP_VERSION="${APP_VERSION:-1.0.1}"
+APP_VERSION="${APP_VERSION:-1.0.2}"
+SIGN_IDENTITY="${SIGN_IDENTITY:-}"
 ARCH="${1:-${ARCH:-}}"
 VOL_NAME="${APP_NAME}"
 
 if [[ -z "$ARCH" ]]; then
-  echo "Usage: $0 <arm64|x86_64>"
+  echo "Usage: $0 <arm64|x86_64|universal>"
   exit 1
 fi
 
-if [[ "$ARCH" != "arm64" && "$ARCH" != "x86_64" ]]; then
-  echo "Unsupported ARCH: $ARCH (expected arm64 or x86_64)"
+if [[ "$ARCH" != "arm64" && "$ARCH" != "x86_64" && "$ARCH" != "universal" ]]; then
+  echo "Unsupported ARCH: $ARCH (expected arm64, x86_64, or universal)"
   exit 1
 fi
 
@@ -174,5 +175,10 @@ hdiutil detach "$DEVICE_NAME" >/dev/null || hdiutil detach "$DEVICE_NAME" -force
 DEVICE_NAME=""
 hdiutil convert "$RW_DMG_PATH" -format UDZO -imagekey zlib-level=9 -o "$DMG_PATH" >/dev/null
 rm -f "$RW_DMG_PATH"
+
+if [[ -n "$SIGN_IDENTITY" && "$SIGN_IDENTITY" != "-" ]]; then
+  echo "Signing DMG with identity: $SIGN_IDENTITY"
+  codesign --force --timestamp --sign "$SIGN_IDENTITY" "$DMG_PATH"
+fi
 
 echo "DMG created: $DMG_PATH"

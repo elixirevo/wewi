@@ -73,11 +73,17 @@ dist/wewi.app
 ### Build DMG for distribution
 
 ```bash
+# Optional: set Developer ID identity for trusted distribution
+# export SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+#
 # arm64
 make dmg-arm64
 
 # x86_64
 make dmg-x86_64
+
+# universal (arm64 + x86_64)
+make dmg-universal
 
 # both
 make dmg-all
@@ -86,9 +92,14 @@ make dmg-all
 Generated DMG filenames:
 
 ```text
-dist/wewi-1.0.1-arm64.dmg
-dist/wewi-1.0.1-x86_64.dmg
+dist/wewi-1.0.2-arm64.dmg
+dist/wewi-1.0.2-x86_64.dmg
+dist/wewi-1.0.2-universal.dmg
 ```
+
+Note:
+- Default build uses ad-hoc signing (`SIGN_IDENTITY=-`) for local testing.
+- For public distribution, use a valid `Developer ID Application` certificate and notarize the DMG/app. Without this, Gatekeeper may show "app is damaged" or block launch on other Macs.
 
 ## 🧱 Project Structure
 
