@@ -8,4 +8,12 @@ cask "wewi" do
   homepage "https://github.com/elixirevo/wewi"
 
   app "wewi.app"
+
+  caveats <<~EOS
+    This app is currently distributed with ad-hoc signing.
+    On another Mac, if Gatekeeper blocks launch, run:
+
+      xattr -dr com.apple.quarantine /Applications/wewi.app
+      open /Applications/wewi.app
+  EOS
 end

@@ -100,6 +100,35 @@ dist/wewi-1.0.2-universal.dmg
 Note:
 - Default build uses ad-hoc signing (`SIGN_IDENTITY=-`) for local testing.
 - For public distribution, use a valid `Developer ID Application` certificate and notarize the DMG/app. Without this, Gatekeeper may show "app is damaged" or block launch on other Macs.
+- With ad-hoc distribution, users may need to remove quarantine manually:
+  - `xattr -dr com.apple.quarantine /Applications/wewi.app`
+  - `open /Applications/wewi.app`
+
+## 🍺 Homebrew Install
+
+Published casks are distributed via the shared tap repository:
+
+- Tap repo: `https://github.com/elixirevo/homebrew-tap`
+- Cask token: `wewi`
+
+Install:
+
+```bash
+brew tap elixirevo/tap
+brew install --cask elixirevo/tap/wewi
+```
+
+Local cask test from this repository:
+
+```bash
+brew install --cask ./Casks/wewi.rb
+```
+
+For maintainers:
+
+1. Create/update release assets on `elixirevo/wewi`.
+2. Copy `Casks/wewi.rb` into `elixirevo/homebrew-tap` (`Casks/wewi.rb`).
+3. Commit and push the tap update.
 
 ## 🧱 Project Structure
 
