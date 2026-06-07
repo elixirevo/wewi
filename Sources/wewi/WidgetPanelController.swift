@@ -11,11 +11,14 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
     private let chromeView: WidgetChromeView
     private var onFrameChanged: ((UUID, WidgetFrame) -> Void)?
     private var onInteractionChanged: ((UUID, Bool) -> Void)?
+    private var onScrollPositionChanged: ((UUID, Double, Double) -> Void)?
     private var onDisableRequested: ((UUID) -> Void)?
     private var lastRequestedURLString: String?
     private var loadRetryWorkItem: DispatchWorkItem?
     private var loadRetryCount = 0
     private let maxLoadRetryCount = 4
+    private var autoRefreshTimer: Timer?
+    private var activeAutoRefreshIntervalSeconds: Double = 0
     private var isHiddenForUnavailableScreen = false
     private var isObservingAppearanceChanges = false
 
@@ -23,12 +26,14 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         config: WidgetConfig,
         onFrameChanged: ((UUID, WidgetFrame) -> Void)? = nil,
         onInteractionChanged: ((UUID, Bool) -> Void)? = nil,
+        onScrollPositionChanged: ((UUID, Double, Double) -> Void)? = nil,
         onDisableRequested: ((UUID) -> Void)? = nil
     ) {
         self.id = config.id
         self.config = config
         self.onFrameChanged = onFrameChanged
         self.onInteractionChanged = onInteractionChanged
+        self.onScrollPositionChanged = onScrollPositionChanged
         self.onDisableRequested = onDisableRequested
 
         let panel = WidgetPanel(
@@ -103,6 +108,9 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
                 guard let self else { return }
                 self.onFrameChanged?(self.id, WidgetFrame.from(frame))
             },
+            onSaveScrollPosition: { [weak self] in
+                self?.saveCurrentScrollPosition()
+            },
             onReload: { [weak self] in
                 self?.reload()
             },
@@ -122,6 +130,7 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
             panel.setFrame(targetFrame, display: true)
         }
         updateVisibilityForCurrentScreens()
+        applyAutoRefreshInterval(config.normalizedRefreshIntervalSeconds)
 
         if let url = config.url, lastRequestedURLString != config.urlString {
             loadRetryCount = 0
@@ -144,6 +153,9 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
 
     func close() {
         loadRetryWorkItem?.cancel()
+        autoRefreshTimer?.invalidate()
+        autoRefreshTimer = nil
+        activeAutoRefreshIntervalSeconds = 0
         NotificationCenter.default.removeObserver(self, name: NSApplication.didChangeScreenParametersNotification, object: nil)
         if isObservingAppearanceChanges {
             DistributedNotificationCenter.default().removeObserver(
@@ -160,6 +172,28 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         loadRetryCount = 0
         loadRetryWorkItem?.cancel()
         webView.reload()
+    }
+
+    private func applyAutoRefreshInterval(_ intervalSeconds: Double) {
+        let normalized = intervalSeconds > 0 ? max(1, intervalSeconds) : 0
+        if normalized == activeAutoRefreshIntervalSeconds,
+           (normalized == 0 || autoRefreshTimer != nil) {
+            return
+        }
+
+        autoRefreshTimer?.invalidate()
+        autoRefreshTimer = nil
+        activeAutoRefreshIntervalSeconds = normalized
+
+        guard normalized > 0 else { return }
+
+        let timer = Timer(timeInterval: normalized, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.reload()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        autoRefreshTimer = timer
     }
 
     func windowDidEndLiveResize(_ notification: Notification) {
@@ -305,6 +339,7 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         loadRetryWorkItem?.cancel()
         applyWebColorScheme()
         applyWebInteractionMode(allowsInteraction: config.allowsInteraction)
+        restoreScrollPosition()
     }
 
     func webView(
@@ -339,6 +374,60 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         }
         loadRetryWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    private func restoreScrollPosition() {
+        let x = max(0, config.scrollX.rounded())
+        let y = max(0, config.scrollY.rounded())
+        guard x > 0 || y > 0 else { return }
+
+        let js = "window.scrollTo(\(Int(x)), \(Int(y)));"
+        webView.evaluateJavaScript(js, completionHandler: nil)
+
+        for delay in [0.5, 1.5] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self else { return }
+                self.webView.evaluateJavaScript(js, completionHandler: nil)
+            }
+        }
+    }
+
+    private func saveCurrentScrollPosition() {
+        let js = """
+        ({
+          x: Math.max(0, Math.round(window.scrollX || window.pageXOffset || 0)),
+          y: Math.max(0, Math.round(window.scrollY || window.pageYOffset || 0))
+        });
+        """
+        webView.evaluateJavaScript(js) { [weak self] result, _ in
+            Task { @MainActor in
+                guard let self,
+                      let body = result as? [String: Any],
+                      let x = Self.doubleValue(from: body["x"]),
+                      let y = Self.doubleValue(from: body["y"]) else {
+                    return
+                }
+
+                let roundedX = max(0, x.rounded())
+                let roundedY = max(0, y.rounded())
+                self.config.scrollX = roundedX
+                self.config.scrollY = roundedY
+                self.onScrollPositionChanged?(self.id, roundedX, roundedY)
+            }
+        }
+    }
+
+    private static func doubleValue(from value: Any?) -> Double? {
+        switch value {
+        case let double as Double:
+            return double
+        case let int as Int:
+            return Double(int)
+        case let number as NSNumber:
+            return number.doubleValue
+        default:
+            return nil
+        }
     }
 }
 

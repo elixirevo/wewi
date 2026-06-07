@@ -4,7 +4,7 @@
 ![Swift](https://img.shields.io/badge/Swift-6-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-<img src="./icon.png" alt="wewi Icon" width="160" />
+<img src="./wewi_icons/wewi-iOS-Default-1024x1024@1x.png" alt="wewi Icon" width="160" />
 
 **wewi** is a native macOS app that pins live web pages to your desktop as widgets.
 
@@ -22,9 +22,11 @@ Use it for dashboards, charts, docs, notes, and any URL you want to keep visible
 - Per-widget settings:
   - Name, URL, position, size
   - Opacity
+  - Auto-refresh interval
   - Enable/disable
   - Screen Lock mode (blocks web interaction)
 - Widget top bar actions:
+  - Save scroll position
   - Reload
   - Screen Lock toggle (`ON` = blocked, `OFF` = interactive)
   - Disable widget
@@ -32,6 +34,7 @@ Use it for dashboards, charts, docs, notes, and any URL you want to keep visible
   - Open Settings
   - Enable/disable, reload, delete widgets
 - Auto-save widget settings (`UserDefaults` JSON)
+- Restore each widget browser's saved scroll position after app relaunch
 - Launch at login toggle in Settings
 - Auto-scroll to newly added widget in Widget List
 

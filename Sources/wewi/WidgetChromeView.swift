@@ -9,12 +9,14 @@ final class WidgetChromeView: NSView {
     private let dragArea = DragAreaView()
     private let resizeHandle = ResizeHandleView()
     private let interactionBlocker = InteractionBlockerView()
+    private let saveScrollButton = NSButton()
     private let reloadButton = NSButton()
     private let interactionButton = NSButton()
     private let disableButton = NSButton()
 
     private var minSize = NSSize(width: 180, height: 120)
     private var onFrameChange: ((NSRect) -> Void)?
+    private var onSaveScrollPosition: (() -> Void)?
     private var onReload: (() -> Void)?
     private var onToggleInteraction: ((Bool) -> Void)?
     private var onDisableWidget: (() -> Void)?
@@ -42,6 +44,7 @@ final class WidgetChromeView: NSView {
         name: String,
         allowsInteraction: Bool,
         onResize: @escaping (NSRect) -> Void,
+        onSaveScrollPosition: @escaping () -> Void,
         onReload: @escaping () -> Void,
         onToggleInteraction: @escaping (Bool) -> Void,
         onDisableWidget: @escaping () -> Void
@@ -50,6 +53,7 @@ final class WidgetChromeView: NSView {
         self.allowsInteraction = allowsInteraction
         interactionBlocker.isHidden = allowsInteraction
         self.onFrameChange = onResize
+        self.onSaveScrollPosition = onSaveScrollPosition
         self.onReload = onReload
         self.onToggleInteraction = onToggleInteraction
         self.onDisableWidget = onDisableWidget
@@ -69,6 +73,7 @@ final class WidgetChromeView: NSView {
         resizeHandle.translatesAutoresizingMaskIntoConstraints = false
         titleField.translatesAutoresizingMaskIntoConstraints = false
         interactionBlocker.translatesAutoresizingMaskIntoConstraints = false
+        saveScrollButton.translatesAutoresizingMaskIntoConstraints = false
         reloadButton.translatesAutoresizingMaskIntoConstraints = false
         interactionButton.translatesAutoresizingMaskIntoConstraints = false
         disableButton.translatesAutoresizingMaskIntoConstraints = false
@@ -76,9 +81,17 @@ final class WidgetChromeView: NSView {
         interactionBlocker.wantsLayer = true
         interactionBlocker.layer?.backgroundColor = NSColor.clear.cgColor
 
+        saveScrollButton.bezelStyle = .texturedRounded
+        saveScrollButton.title = "Save"
+        saveScrollButton.font = .systemFont(ofSize: 10, weight: .semibold)
+        saveScrollButton.toolTip = "Save scroll position"
+        saveScrollButton.target = self
+        saveScrollButton.action = #selector(saveScrollTapped)
+
         reloadButton.bezelStyle = .texturedRounded
         reloadButton.title = "↻"
         reloadButton.font = .systemFont(ofSize: 12, weight: .semibold)
+        reloadButton.toolTip = "Reload"
         reloadButton.target = self
         reloadButton.action = #selector(reloadTapped)
 
@@ -99,6 +112,7 @@ final class WidgetChromeView: NSView {
         addSubview(webBackground, positioned: .below, relativeTo: webView)
         addSubview(dragArea)
         addSubview(titleField)
+        addSubview(saveScrollButton)
         addSubview(reloadButton)
         addSubview(interactionButton)
         addSubview(disableButton)
@@ -170,7 +184,7 @@ final class WidgetChromeView: NSView {
             dragArea.heightAnchor.constraint(equalToConstant: 22),
 
             titleField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            titleField.trailingAnchor.constraint(equalTo: disableButton.leadingAnchor, constant: -8),
+            titleField.trailingAnchor.constraint(equalTo: interactionButton.leadingAnchor, constant: -8),
             titleField.centerYAnchor.constraint(equalTo: dragArea.centerYAnchor, constant: 1),
 
             disableButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
@@ -183,7 +197,12 @@ final class WidgetChromeView: NSView {
             reloadButton.widthAnchor.constraint(equalToConstant: 28),
             reloadButton.heightAnchor.constraint(equalToConstant: 18),
 
-            interactionButton.trailingAnchor.constraint(equalTo: reloadButton.leadingAnchor, constant: -6),
+            saveScrollButton.trailingAnchor.constraint(equalTo: reloadButton.leadingAnchor, constant: -6),
+            saveScrollButton.centerYAnchor.constraint(equalTo: dragArea.centerYAnchor),
+            saveScrollButton.widthAnchor.constraint(equalToConstant: 42),
+            saveScrollButton.heightAnchor.constraint(equalToConstant: 18),
+
+            interactionButton.trailingAnchor.constraint(equalTo: saveScrollButton.leadingAnchor, constant: -6),
             interactionButton.centerYAnchor.constraint(equalTo: dragArea.centerYAnchor),
             interactionButton.widthAnchor.constraint(equalToConstant: 46),
             interactionButton.heightAnchor.constraint(equalToConstant: 18),
@@ -238,6 +257,11 @@ final class WidgetChromeView: NSView {
         isPointerInsideChrome = false
         guard !isResizing else { return }
         scheduleResizeHandleHide()
+    }
+
+    @objc
+    private func saveScrollTapped() {
+        onSaveScrollPosition?()
     }
 
     @objc

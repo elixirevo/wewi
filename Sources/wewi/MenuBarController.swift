@@ -68,10 +68,7 @@ final class MenuBarController: NSObject {
 
     private func configure() {
         if let button = statusItem.button {
-            if let url = Bundle.main.url(forResource: "icon", withExtension: "png"),
-               let image = NSImage(contentsOf: url) {
-                image.size = NSSize(width: 18, height: 18)
-                image.isTemplate = false
+            if let image = menuBarIconImage() {
                 button.image = image
                 button.imagePosition = .imageOnly
                 button.title = ""
@@ -80,6 +77,28 @@ final class MenuBarController: NSObject {
             }
         }
         refresh()
+    }
+
+    private func menuBarIconImage() -> NSImage? {
+        if let url = Bundle.main.url(forResource: "menubar-icon", withExtension: "png"),
+           let image = NSImage(contentsOf: url) {
+            image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = true
+            return image
+        }
+
+        for (resourceName, resourceExtension) in [("AppIcon", "icns"), ("AppIcon", "png"), ("icon", "png")] {
+            guard let url = Bundle.main.url(forResource: resourceName, withExtension: resourceExtension),
+                  let image = NSImage(contentsOf: url) else {
+                continue
+            }
+
+            image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = false
+            return image
+        }
+
+        return nil
     }
 
     @objc private func openSettings(_ sender: Any?) {

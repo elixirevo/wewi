@@ -232,7 +232,9 @@ struct SettingsView: View {
             frame: WidgetFrame(x: 80, y: 80, width: max(180, width), height: max(120, height)),
             opacity: 1.0,
             isEnabled: true,
-            allowsInteraction: true
+            allowsInteraction: true,
+            refreshIntervalValue: 0,
+            refreshIntervalUnit: .seconds
         )
         store.add(widget)
         draftName = ""

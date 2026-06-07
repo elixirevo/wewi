@@ -41,7 +41,26 @@ else
   chmod +x "$MACOS_DIR/$APP_NAME"
 fi
 
-cp "$ROOT_DIR/icon.png" "$RESOURCES_DIR/icon.png"
+cp "$ROOT_DIR/menubar-icon.png" "$RESOURCES_DIR/menubar-icon.png"
+
+ICON_SOURCE_DIR="$ROOT_DIR/wewi_icons"
+ICONSET_DIR="$RESOURCES_DIR/AppIcon.iconset"
+mkdir -p "$ICONSET_DIR"
+
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-16x16@1x.png" "$ICONSET_DIR/icon_16x16.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-16x16@2x.png" "$ICONSET_DIR/icon_16x16@2x.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-32x32@1x.png" "$ICONSET_DIR/icon_32x32.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-32x32@2x.png" "$ICONSET_DIR/icon_32x32@2x.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-128x128@1x.png" "$ICONSET_DIR/icon_128x128.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-128x128@2x.png" "$ICONSET_DIR/icon_128x128@2x.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-256x256@1x.png" "$ICONSET_DIR/icon_256x256.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-256x256@2x.png" "$ICONSET_DIR/icon_256x256@2x.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-512x512@1x.png" "$ICONSET_DIR/icon_512x512.png"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-1024x1024@1x.png" "$ICONSET_DIR/icon_512x512@2x.png"
+
+iconutil -c icns "$ICONSET_DIR" -o "$RESOURCES_DIR/AppIcon.icns"
+cp "$ICON_SOURCE_DIR/wewi-iOS-Default-1024x1024@1x.png" "$RESOURCES_DIR/AppIcon.png"
+rm -rf "$ICONSET_DIR"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -61,7 +80,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundleExecutable</key>
   <string>wewi</string>
   <key>CFBundleIconFile</key>
-  <string>icon.png</string>
+  <string>AppIcon.icns</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>

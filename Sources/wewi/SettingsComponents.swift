@@ -21,7 +21,19 @@ struct BrandLogo: View {
 
     private var logoImage: some View {
         Group {
-            if let url = Bundle.main.url(forResource: "icon", withExtension: "png"),
+            if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "png"),
+               let image = NSImage(contentsOf: url) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+            } else if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+                      let image = NSImage(contentsOf: url) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+            } else if let url = Bundle.main.url(forResource: "icon", withExtension: "png"),
                let image = NSImage(contentsOf: url) {
                 Image(nsImage: image)
                     .resizable()
@@ -51,6 +63,8 @@ struct WidgetRow: View {
     @State private var opacity: Double
     @State private var isEnabled: Bool
     @State private var allowsInteraction: Bool
+    @State private var refreshIntervalValue: String
+    @State private var refreshIntervalUnit: WidgetRefreshIntervalUnit
 
     init(widget: WidgetConfig, onSave: @escaping (WidgetConfig) -> Void, onDelete: @escaping () -> Void) {
         self.widget = widget
@@ -66,6 +80,8 @@ struct WidgetRow: View {
         _opacity = State(initialValue: widget.opacity)
         _isEnabled = State(initialValue: widget.isEnabled)
         _allowsInteraction = State(initialValue: widget.allowsInteraction)
+        _refreshIntervalValue = State(initialValue: Self.refreshIntervalDisplayValue(widget.refreshIntervalValue))
+        _refreshIntervalUnit = State(initialValue: widget.refreshIntervalUnit)
     }
 
     var body: some View {
@@ -124,6 +140,10 @@ struct WidgetRow: View {
                     metricField(label: "H", text: $height)
                 }
 
+                refreshIntervalField
+            }
+
+            HStack(spacing: 8) {
                 Text("Opacity")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.6))
@@ -163,6 +183,28 @@ struct WidgetRow: View {
         }
     }
 
+    private var refreshIntervalField: some View {
+        HStack(spacing: 4) {
+            Text("Refresh")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.6))
+            TextField("0", text: $refreshIntervalValue)
+                .wewiFieldStyle()
+                .frame(width: 54)
+                .onChange(of: refreshIntervalValue) { _ in pushNonFrameUpdate() }
+
+            Picker("Refresh unit", selection: $refreshIntervalUnit) {
+                ForEach(WidgetRefreshIntervalUnit.allCases) { unit in
+                    Text(unit.label).tag(unit)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 128)
+            .onChange(of: refreshIntervalUnit) { _ in pushNonFrameUpdate() }
+        }
+    }
+
     private func syncFromWidget(_ newWidget: WidgetConfig) {
         name = normalizedName(newWidget.name)
         url = newWidget.urlString
@@ -173,15 +215,22 @@ struct WidgetRow: View {
         opacity = newWidget.opacity
         isEnabled = newWidget.isEnabled
         allowsInteraction = newWidget.allowsInteraction
+        refreshIntervalValue = Self.refreshIntervalDisplayValue(newWidget.refreshIntervalValue)
+        refreshIntervalUnit = newWidget.refreshIntervalUnit
     }
 
     private func pushNonFrameUpdate() {
         var updated = widget
         updated.name = normalizedName(name)
         updated.urlString = url
+        resetScrollPositionIfURLChanged(&updated)
         updated.opacity = max(0.1, min(1.0, opacity))
         updated.isEnabled = isEnabled
         updated.allowsInteraction = allowsInteraction
+        if let refreshInterval = parsedRefreshIntervalValue() {
+            updated.refreshIntervalValue = refreshInterval
+            updated.refreshIntervalUnit = refreshIntervalUnit
+        }
         onSave(updated)
     }
 
@@ -194,15 +243,38 @@ struct WidgetRow: View {
         var updated = widget
         updated.name = normalizedName(name)
         updated.urlString = url
+        resetScrollPositionIfURLChanged(&updated)
         updated.frame = WidgetFrame(x: px, y: py, width: max(180, pw), height: max(120, ph))
         updated.opacity = max(0.1, min(1.0, opacity))
         updated.isEnabled = isEnabled
         updated.allowsInteraction = allowsInteraction
+        if let refreshInterval = parsedRefreshIntervalValue() {
+            updated.refreshIntervalValue = refreshInterval
+            updated.refreshIntervalUnit = refreshIntervalUnit
+        }
         onSave(updated)
     }
 
     private func normalizedName(_ raw: String) -> String {
         raw == "Untitled" ? "" : raw
+    }
+
+    private func resetScrollPositionIfURLChanged(_ updated: inout WidgetConfig) {
+        guard updated.urlString != widget.urlString else { return }
+        updated.scrollX = 0
+        updated.scrollY = 0
+    }
+
+    private func parsedRefreshIntervalValue() -> Double? {
+        guard let value = Double(refreshIntervalValue.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            return nil
+        }
+        return value > 0 ? max(1, value.rounded()) : 0
+    }
+
+    private static func refreshIntervalDisplayValue(_ value: Double) -> String {
+        let normalized = value > 0 ? max(1, value.rounded()) : 0
+        return String(Int(normalized))
     }
 }
 

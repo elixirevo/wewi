@@ -42,6 +42,12 @@ final class WidgetManager {
                     onInteractionChanged: { [weak self] id, allowsInteraction in
                         self?.store.update(id: id) { $0.allowsInteraction = allowsInteraction }
                     },
+                    onScrollPositionChanged: { [weak self] id, x, y in
+                        self?.store.update(id: id) {
+                            $0.scrollX = x
+                            $0.scrollY = y
+                        }
+                    },
                     onDisableRequested: { [weak self] id in
                         self?.store.update(id: id) { $0.isEnabled = false }
                     }
