@@ -1,15 +1,23 @@
 import AppKit
+import Sparkle
 
 @MainActor
 final class MenuBarController: NSObject {
     private let store: WidgetStore
     private let manager: WidgetManager
+    private let updaterController: SPUStandardUpdaterController
     private let statusItem: NSStatusItem
     private let onOpenSettings: () -> Void
 
-    init(store: WidgetStore, manager: WidgetManager, onOpenSettings: @escaping () -> Void) {
+    init(
+        store: WidgetStore,
+        manager: WidgetManager,
+        updaterController: SPUStandardUpdaterController,
+        onOpenSettings: @escaping () -> Void
+    ) {
         self.store = store
         self.manager = manager
+        self.updaterController = updaterController
         self.onOpenSettings = onOpenSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
@@ -22,6 +30,14 @@ final class MenuBarController: NSObject {
         let settingsItem = NSMenuItem(title: "Open Settings", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
+
+        let updateItem = NSMenuItem(
+            title: "Check for Updates...",
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        updateItem.target = updaterController
+        menu.addItem(updateItem)
 
         menu.addItem(.separator())
 

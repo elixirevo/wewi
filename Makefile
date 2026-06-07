@@ -1,4 +1,4 @@
-.PHONY: build app run-app dmg dmg-arm64 dmg-x86_64 dmg-universal dmg-all
+.PHONY: build app run-app dmg dmg-arm64 dmg-x86_64 dmg-universal dmg-all sparkle-keys appcast
 
 build:
 	swift build
@@ -21,3 +21,9 @@ dmg-universal:
 	bash scripts/build_dmg.sh universal
 
 dmg-all: dmg-arm64 dmg-x86_64 dmg-universal
+
+sparkle-keys:
+	bash scripts/generate_sparkle_keys.sh
+
+appcast:
+	bash scripts/generate_appcast.sh universal

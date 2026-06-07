@@ -32,6 +32,7 @@ Use it for dashboards, charts, docs, notes, and any URL you want to keep visible
   - Disable widget
 - Menu bar controls:
   - Open Settings
+  - Check for Updates
   - Enable/disable, reload, delete widgets
 - Auto-save widget settings (`UserDefaults` JSON)
 - Restore each widget browser's saved scroll position after app relaunch
@@ -107,6 +108,57 @@ Note:
   - `xattr -dr com.apple.quarantine /Applications/wewi.app`
   - `open /Applications/wewi.app`
 
+### Sparkle Updates
+
+wewi uses Sparkle 2 for automatic update checks.
+
+The appcast URL embedded in the app bundle is:
+
+```text
+https://github.com/elixirevo/wewi/releases/latest/download/appcast.xml
+```
+
+Generate the Sparkle EdDSA key pair once:
+
+```bash
+make sparkle-keys
+```
+
+This stores the private key in your macOS Keychain and writes the public key to:
+
+```text
+sparkle-public-key.txt
+```
+
+Create a DMG and Sparkle appcast for a GitHub Release:
+
+```bash
+APP_VERSION=1.0.2 APP_BUILD=3 make appcast
+```
+
+For public distribution, sign and notarize the final DMG before generating the appcast signature. If you notarize/staple the DMG separately, reuse that final DMG:
+
+```bash
+APP_VERSION=1.0.2 APP_BUILD=3 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make dmg-universal
+# notarize and staple dist/wewi-1.0.2-universal.dmg
+APP_VERSION=1.0.2 SKIP_DMG_BUILD=1 make appcast
+```
+
+Upload both generated files to the matching GitHub Release tag, e.g. `v1.0.2`:
+
+```text
+dist/wewi-1.0.2-universal.dmg
+dist/appcast/appcast.xml
+```
+
+Useful overrides:
+
+```bash
+SPARKLE_FEED_URL=https://example.com/appcast.xml make app
+GITHUB_REPOSITORY=elixirevo/wewi RELEASE_TAG=v1.0.2 make appcast
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make appcast
+```
+
 ## 🍺 Homebrew Install
 
 Published casks are distributed via the shared tap repository:
@@ -157,6 +209,7 @@ scripts/
 
 wewi runs locally on your Mac.
 No app telemetry or remote upload is built into the project.
+Sparkle update checks fetch the appcast from GitHub Releases.
 
 ## 🛠 Contributing
 

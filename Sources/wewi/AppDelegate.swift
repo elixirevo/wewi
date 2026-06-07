@@ -1,10 +1,16 @@
 import AppKit
 import Combine
+import Sparkle
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = WidgetStore()
     private let launchAtLoginManager = LaunchAtLoginManager()
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
     private lazy var manager = WidgetManager(store: store)
     private lazy var settingsWindow = SettingsWindowController(
         store: store,
@@ -17,9 +23,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMainMenu()
 
-        menuBar = MenuBarController(store: store, manager: manager, onOpenSettings: { [weak self] in
-            self?.settingsWindow.show()
-        })
+        menuBar = MenuBarController(
+            store: store,
+            manager: manager,
+            updaterController: updaterController,
+            onOpenSettings: { [weak self] in
+                self?.settingsWindow.show()
+            }
+        )
 
         store.$widgets
             .receive(on: RunLoop.main)

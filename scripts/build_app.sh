@@ -12,10 +12,20 @@ APP_DIR="$ROOT_DIR/dist/$APP_BUNDLE_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
+FRAMEWORKS_DIR="$CONTENTS_DIR/Frameworks"
+SPARKLE_FEED_URL="${SPARKLE_FEED_URL:-https://github.com/elixirevo/wewi/releases/latest/download/appcast.xml}"
+SPARKLE_ENABLE_AUTOMATIC_CHECKS="${SPARKLE_ENABLE_AUTOMATIC_CHECKS:-true}"
+SPARKLE_PUBLIC_ED_KEY_FILE="${SPARKLE_PUBLIC_ED_KEY_FILE:-$ROOT_DIR/sparkle-public-key.txt}"
+SPARKLE_PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY:-}"
+
+if [[ -z "$SPARKLE_PUBLIC_ED_KEY" && -f "$SPARKLE_PUBLIC_ED_KEY_FILE" ]]; then
+  SPARKLE_PUBLIC_ED_KEY="$(tr -d '[:space:]' < "$SPARKLE_PUBLIC_ED_KEY_FILE")"
+fi
 
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
+mkdir -p "$FRAMEWORKS_DIR"
 
 if [[ "$ARCH" == "universal" ]]; then
   swift build -c release --arch arm64
@@ -40,6 +50,23 @@ else
   cp "$BIN_PATH/$APP_NAME" "$MACOS_DIR/$APP_NAME"
   chmod +x "$MACOS_DIR/$APP_NAME"
 fi
+
+if ! otool -l "$MACOS_DIR/$APP_NAME" | grep -q "@executable_path/../Frameworks"; then
+  install_name_tool -add_rpath "@executable_path/../Frameworks" "$MACOS_DIR/$APP_NAME"
+fi
+
+SPARKLE_FRAMEWORK_SOURCE="${SPARKLE_FRAMEWORK_SOURCE:-}"
+if [[ -z "$SPARKLE_FRAMEWORK_SOURCE" ]]; then
+  SPARKLE_FRAMEWORK_SOURCE="$(find "$ROOT_DIR/.build" -path "*/Sparkle.framework" -type d | sort | head -n 1)"
+fi
+
+if [[ -z "$SPARKLE_FRAMEWORK_SOURCE" || ! -d "$SPARKLE_FRAMEWORK_SOURCE" ]]; then
+  echo "Sparkle.framework was not found under .build."
+  echo "Run 'swift build' after Package.swift resolves Sparkle, or set SPARKLE_FRAMEWORK_SOURCE."
+  exit 1
+fi
+
+ditto "$SPARKLE_FRAMEWORK_SOURCE" "$FRAMEWORKS_DIR/Sparkle.framework"
 
 cp "$ROOT_DIR/menubar-icon.png" "$RESOURCES_DIR/menubar-icon.png"
 
@@ -93,13 +120,48 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 </plist>
 PLIST
 
+/usr/libexec/PlistBuddy -c "Add :SUFeedURL string $SPARKLE_FEED_URL" "$CONTENTS_DIR/Info.plist"
+/usr/libexec/PlistBuddy -c "Add :SUEnableAutomaticChecks bool $SPARKLE_ENABLE_AUTOMATIC_CHECKS" "$CONTENTS_DIR/Info.plist"
+
+if [[ -n "$SPARKLE_PUBLIC_ED_KEY" ]]; then
+  /usr/libexec/PlistBuddy -c "Add :SUPublicEDKey string $SPARKLE_PUBLIC_ED_KEY" "$CONTENTS_DIR/Info.plist"
+else
+  echo "Warning: Sparkle public key not set. Run 'make sparkle-keys' before release builds."
+fi
+
+codesign_path() {
+  local path="$1"
+  shift
+
+  if [[ ! -e "$path" ]]; then
+    return
+  fi
+
+  if [[ "$SIGN_IDENTITY" == "-" ]]; then
+    codesign --force --sign - "$@" "$path"
+  else
+    codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$@" "$path"
+  fi
+}
+
+SPARKLE_FRAMEWORK="$FRAMEWORKS_DIR/Sparkle.framework"
+SPARKLE_FRAMEWORK_VERSION_DIR="$SPARKLE_FRAMEWORK/Versions/B"
+if [[ ! -d "$SPARKLE_FRAMEWORK_VERSION_DIR" ]]; then
+  SPARKLE_FRAMEWORK_VERSION_DIR="$SPARKLE_FRAMEWORK/Versions/Current"
+fi
+
 if [[ "$SIGN_IDENTITY" == "-" ]]; then
   echo "Signing app with ad-hoc identity (-)."
-  codesign --force --deep --sign - "$APP_DIR"
 else
   echo "Signing app with identity: $SIGN_IDENTITY"
-  codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP_DIR"
 fi
+
+codesign_path "$SPARKLE_FRAMEWORK_VERSION_DIR/XPCServices/Installer.xpc"
+codesign_path "$SPARKLE_FRAMEWORK_VERSION_DIR/XPCServices/Downloader.xpc" --preserve-metadata=entitlements
+codesign_path "$SPARKLE_FRAMEWORK_VERSION_DIR/Autoupdate"
+codesign_path "$SPARKLE_FRAMEWORK_VERSION_DIR/Updater.app"
+codesign_path "$SPARKLE_FRAMEWORK"
+codesign_path "$APP_DIR"
 
 codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
