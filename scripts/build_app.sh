@@ -113,24 +113,19 @@ ditto "$SPARKLE_FRAMEWORK_SOURCE" "$FRAMEWORKS_DIR/Sparkle.framework"
 
 cp "$ROOT_DIR/menubar-icon.png" "$RESOURCES_DIR/menubar-icon.png"
 
-ICON_SOURCE_DIR="$ROOT_DIR/wewi_icons"
-ICONSET_DIR="$RESOURCES_DIR/AppIcon.iconset"
-mkdir -p "$ICONSET_DIR"
-
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-16x16@1x.png" "$ICONSET_DIR/icon_16x16.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-16x16@2x.png" "$ICONSET_DIR/icon_16x16@2x.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-32x32@1x.png" "$ICONSET_DIR/icon_32x32.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-32x32@2x.png" "$ICONSET_DIR/icon_32x32@2x.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-128x128@1x.png" "$ICONSET_DIR/icon_128x128.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-128x128@2x.png" "$ICONSET_DIR/icon_128x128@2x.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-256x256@1x.png" "$ICONSET_DIR/icon_256x256.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-256x256@2x.png" "$ICONSET_DIR/icon_256x256@2x.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-512x512@1x.png" "$ICONSET_DIR/icon_512x512.png"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-1024x1024@1x.png" "$ICONSET_DIR/icon_512x512@2x.png"
-
-iconutil -c icns "$ICONSET_DIR" -o "$RESOURCES_DIR/AppIcon.icns"
-cp "$ICON_SOURCE_DIR/wewi-iOS-Default-1024x1024@1x.png" "$RESOURCES_DIR/AppIcon.png"
-rm -rf "$ICONSET_DIR"
+# Compile the whole Icon Composer document, including its background, layers and
+# appearance variants. A PNG-only icon generator would discard that information.
+ICON_INFO_PLIST="$ROOT_DIR/dist/$APP_BUNDLE_NAME-icon.plist"
+xcrun actool "$ROOT_DIR/wewi.icon" \
+  --compile "$RESOURCES_DIR" \
+  --platform macosx \
+  --minimum-deployment-target 13.0 \
+  --app-icon wewi \
+  --output-partial-info-plist "$ICON_INFO_PLIST" \
+  --output-format human-readable-text
+# actool also emits a legacy fallback. Ship only the Icon Composer asset catalog.
+rm "$RESOURCES_DIR/wewi.icns"
+/usr/libexec/PlistBuddy -c "Delete :CFBundleIconFile" "$ICON_INFO_PLIST"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -149,8 +144,6 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <string>${APP_VERSION}</string>
   <key>CFBundleExecutable</key>
   <string>wewi</string>
-  <key>CFBundleIconFile</key>
-  <string>AppIcon.icns</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
@@ -167,6 +160,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
+
+/usr/libexec/PlistBuddy -c "Merge $ICON_INFO_PLIST" "$CONTENTS_DIR/Info.plist"
 
 /usr/libexec/PlistBuddy -c "Add :SUFeedURL string $SPARKLE_FEED_URL" "$CONTENTS_DIR/Info.plist"
 /usr/libexec/PlistBuddy -c "Add :SUEnableAutomaticChecks bool $SPARKLE_ENABLE_AUTOMATIC_CHECKS" "$CONTENTS_DIR/Info.plist"

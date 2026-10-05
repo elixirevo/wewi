@@ -4,7 +4,7 @@
 ![Swift](https://img.shields.io/badge/Swift-6-orange.svg)
 ![License](https://img.shields.io/badge/Distribution-GPL--3.0--only-blue.svg)
 
-<img src="./wewi_icons/wewi-iOS-Default-1024x1024@1x.png" alt="wewi Icon" width="160" />
+<img src="./docs/AppIcon.png" alt="wewi Icon" width="160" />
 
 **wewi** is a native macOS app that pins live web pages to your desktop as widgets.
 
@@ -74,6 +74,19 @@ Built app path:
 ```text
 dist/wewi.app
 ```
+
+### App icon
+
+`wewi.icon/` is the app icon source, edited with Apple's Icon Composer. The build
+uses Xcode's `actool` to produce `Assets.car` with the current Icon Composer
+appearance variants and merges `CFBundleIconName` into `Info.plist`. The compiler's
+legacy `.icns` output is discarded; no separate PNG or legacy app icon is bundled.
+
+The shared `../tools/app-icon/generate_app_icon.sh` supports flat image inputs;
+it does not compile Icon Composer documents. Do not pass only the foreground image
+from `wewi.icon/Assets/` to that script: doing so would lose the background and layers.
+The README preview at `docs/AppIcon.png` is exported directly from `wewi.icon`
+using Icon Composer's `ictool`; it is documentation only and is not bundled.
 
 ### Build DMG for distribution
 
