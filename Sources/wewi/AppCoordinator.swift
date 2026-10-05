@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 import SwiftUI
 import MacAppCore
 import MacAppSettings
@@ -10,6 +11,7 @@ import MacAppDiagnosticsSentry
 final class AppCoordinator {
     let store: WidgetStore
     let preferences: AppPreferences
+    let cookies: WebsiteCookieService
     let navigation = SettingsNavigation()
     let updates = SparkleUpdates()
     let reporting: CrashReportingPreference
@@ -29,6 +31,7 @@ final class AppCoordinator {
 
     init(defaults: UserDefaults, preview: Bool) throws {
         self.preview = preview
+        cookies = WebsiteCookieService(dataStore: preview ? .nonPersistent() : .default())
         store = WidgetStore(userDefaults: defaults)
         preferences = AppPreferences(defaults: defaults)
         reporting = CrashReportingPreference(defaults: defaults)
@@ -47,10 +50,10 @@ final class AppCoordinator {
         var steps: [OnboardingStep] = [
             .welcome(message: appText("Keep your favorite websites on your desktop. wewi lives in your menu bar.")),
             .guide(id: "create", title: appText("Add a website"),
-                   message: appText("Open Settings from the menu bar, choose Features, then enter a name and URL. Choose a size and click Add Widget."),
+                   message: appText("Open Settings from the menu bar, choose Features, then click Add Widget. Enter a website URL, choose a size, and save. Click a widget in the list to edit it."),
                    illustration: Self.guideImage()),
             .guide(id: "arrange", title: appText("Make room for what matters"),
-                   message: appText("Drag the widget header to move it. Drag the corner handle to resize. Widgets stay visible across Spaces; adjust opacity in Features."),
+                   message: appText("Drag the widget header to preview its new position. Enable Snap to grid in Features to align widgets when you drop them, or leave it off for free placement. Press Esc to cancel a move. Drag the corner handle to resize."),
                    illustration: .init(Image(systemName: "rectangle.3.group"), accessibilityLabel: appText("Arrange desktop widgets"))),
             .guide(id: "controls", title: appText("Stay in control"),
                    message: appText("Use the widget header to save your scroll position, reload, lock web interaction, or disable the widget. Set automatic refresh in Features. Screen Lock does not hide private content."),
@@ -74,7 +77,7 @@ final class AppCoordinator {
     private static func guideImage() -> OnboardingIllustration {
         let name = "onboarding-features-" + AppLocalizer.current.languageCode
         if let url = Bundle.module.url(forResource: name, withExtension: "png"), let image = NSImage(contentsOf: url) {
-            return .init(Image(nsImage: image), accessibilityLabel: appText("Features settings with the Add Widget form"))
+            return .init(Image(nsImage: image), accessibilityLabel: appText("Features settings with the widget list and Add Widget button"))
         }
         return .init(Image(systemName: "plus.rectangle.on.rectangle"), accessibilityLabel: appText("Add a website"))
     }
@@ -91,7 +94,10 @@ final class AppCoordinator {
         try! SettingsPages([
             .builtIn(.general),
             .custom(id: "features", title: appText("Features"), symbol: "display", color: Color(red: 0.30, green: 0.68, blue: 0.94)) { [self] in
-                WidgetSettingsContent(store: store, reload: { [weak self] in self?.manager?.reload(id: $0) })
+                WidgetSettingsContent(store: store, preferences: preferences, cookies: cookies,
+                    cookieScope: { [weak self] widget in
+                        self?.manager?.cookieScope(for: widget) ?? WebsiteCookieScope(urls: [widget.url].compactMap { $0 })
+                    }, reload: { [weak self] in self?.manager?.reload(id: $0) })
             },
             .builtIn(.updates), .support, .builtIn(.about)
         ])
@@ -118,6 +124,14 @@ final class AppCoordinator {
         }
     }
 
+    // Explicit offline fixture for exercising real window dragging without consent or network activity.
+    func showPlacementPreview() {
+        guard preview, let area = NSScreen.main?.visibleFrame else { return }
+        store.add(WidgetConfig(name: "Placement preview", urlString: "https://example.com",
+            frame: .init(x: area.minX + 48, y: area.minY + 96, width: 360, height: 260)))
+        manager = WidgetManager(store: store, preferences: preferences, preview: true, websiteDataStore: cookies.dataStore)
+    }
+
     func begin() {
         if onboardingModel.completedVersion < onboardingModel.version {
             onboarding.showIfNeeded()
@@ -128,7 +142,7 @@ final class AppCoordinator {
         if !started {
             started = true
             if !preview {
-                manager = WidgetManager(store: store)
+                manager = WidgetManager(store: store, preferences: preferences, websiteDataStore: cookies.dataStore)
                 do { try diagnostics?.startIfConsented(reporting) } catch { NSAlert(error: error).runModal() }
                 do { try updates.start() } catch { NSAlert(error: error).runModal() }
             }

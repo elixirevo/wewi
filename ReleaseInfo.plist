@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>wewi</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.elixirevo.wewi</string>
+	<key>CFBundleName</key>
+	<string>wewi</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.2.0</string>
+	<key>CFBundleVersion</key>
+	<string>9</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/elixirevo/wewi/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>WqbePVnRnb1iTrG97L2uwcc4FClbTWSRiEvmWpLtR2k=</string>
+</dict>
+</plist>

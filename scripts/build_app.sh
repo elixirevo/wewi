@@ -6,10 +6,15 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="wewi"
-APP_VERSION="${APP_VERSION:-1.0.2}"
-APP_BUILD="${APP_BUILD:-3}"
+APP_VERSION="${APP_VERSION:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT_DIR/ReleaseInfo.plist")}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 ARCH="${ARCH:-}"
+BASE_BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$ROOT_DIR/ReleaseInfo.plist")"
+if [[ "${ARCH:-$(uname -m)}" == "x86_64" ]]; then
+  APP_BUILD="${APP_BUILD:-$BASE_BUILD}"
+else
+  APP_BUILD="${APP_BUILD:-$((BASE_BUILD + 1))}"
+fi
 APP_BUNDLE_NAME="${APP_BUNDLE_NAME:-$APP_NAME}"
 APP_DIR="$ROOT_DIR/dist/$APP_BUNDLE_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"

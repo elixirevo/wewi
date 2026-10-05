@@ -41,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let page = CommandLine.arguments[index + 1]
                 app.show(page: page == "features" ? .custom("features") : page == "support" ? .support : .builtIn(SettingsCategory(rawValue: page) ?? .general))
             } else { app.begin() }
+            if preview && CommandLine.arguments.contains("--placement-demo") { app.showPlacementPreview() }
         } catch {
             NSAlert(error: error).runModal()
             NSApp.terminate(nil)

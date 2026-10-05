@@ -1,0 +1,17 @@
+{
+  "info_plist": "ReleaseInfo.plist",
+  "repository": "elixirevo/wewi",
+  "build_command": [
+    "bash",
+    "scripts/build_release.sh"
+  ],
+  "notary_profile": "menubox",
+  "sparkle_account": "wewi",
+  "tap_path": "../homebrew-tap",
+  "cask_token": "wewi",
+  "cask_template": "Casks/wewi.rb",
+  "sentry": {
+    "configuration": "Sources/wewi/Resources/SentryConfiguration.json",
+    "bundled_configuration": "Contents/Resources/wewi_wewi.bundle/Contents/Resources/SentryConfiguration.json"
+  }
+}

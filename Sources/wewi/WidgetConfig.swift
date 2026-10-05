@@ -11,6 +11,8 @@ struct WidgetConfig: Identifiable, Codable, Equatable {
     var allowsInteraction: Bool
     var refreshIntervalValue: Double
     var refreshIntervalUnit: WidgetRefreshIntervalUnit
+    var browsingMode: WidgetBrowsingMode
+    var reloadOnDeviceChange: Bool
     var scrollX: Double
     var scrollY: Double
 
@@ -24,6 +26,8 @@ struct WidgetConfig: Identifiable, Codable, Equatable {
         allowsInteraction: Bool = true,
         refreshIntervalValue: Double = 0,
         refreshIntervalUnit: WidgetRefreshIntervalUnit = .seconds,
+        browsingMode: WidgetBrowsingMode = .automatic,
+        reloadOnDeviceChange: Bool = false,
         scrollX: Double = 0,
         scrollY: Double = 0
     ) {
@@ -36,6 +40,8 @@ struct WidgetConfig: Identifiable, Codable, Equatable {
         self.allowsInteraction = allowsInteraction
         self.refreshIntervalValue = refreshIntervalValue
         self.refreshIntervalUnit = refreshIntervalUnit
+        self.browsingMode = browsingMode
+        self.reloadOnDeviceChange = reloadOnDeviceChange
         self.scrollX = scrollX
         self.scrollY = scrollY
     }
@@ -63,6 +69,8 @@ struct WidgetConfig: Identifiable, Codable, Equatable {
         case refreshIntervalValue
         case refreshIntervalUnit
         case refreshIntervalSeconds
+        case browsingMode
+        case reloadOnDeviceChange
         case scrollX
         case scrollY
     }
@@ -86,6 +94,10 @@ struct WidgetConfig: Identifiable, Codable, Equatable {
             refreshIntervalUnit = .seconds
         }
 
+        // Old widgets retain their desktop behavior; new widgets start in Automatic.
+        let mode = try container.decodeIfPresent(String.self, forKey: .browsingMode)
+        browsingMode = mode.flatMap(WidgetBrowsingMode.init(rawValue:)) ?? .desktop
+        reloadOnDeviceChange = try container.decodeIfPresent(Bool.self, forKey: .reloadOnDeviceChange) ?? false
         scrollX = try container.decodeIfPresent(Double.self, forKey: .scrollX) ?? 0
         scrollY = try container.decodeIfPresent(Double.self, forKey: .scrollY) ?? 0
     }
@@ -101,6 +113,8 @@ struct WidgetConfig: Identifiable, Codable, Equatable {
         try container.encode(allowsInteraction, forKey: .allowsInteraction)
         try container.encode(normalizedRefreshIntervalValue, forKey: .refreshIntervalValue)
         try container.encode(refreshIntervalUnit, forKey: .refreshIntervalUnit)
+        try container.encode(browsingMode, forKey: .browsingMode)
+        try container.encode(reloadOnDeviceChange, forKey: .reloadOnDeviceChange)
         try container.encode(max(0, scrollX.rounded()), forKey: .scrollX)
         try container.encode(max(0, scrollY.rounded()), forKey: .scrollY)
     }

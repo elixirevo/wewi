@@ -4,8 +4,11 @@ import WebKit
 @MainActor
 final class WidgetChromeView: NSView {
     private let webView: WKWebView
+    private let preferences: AppPreferences
+    private let placement = WidgetPlacementSession()
+    var isDragging: Bool { placement.isActive }
     private let webBackground = NSVisualEffectView()
-    private let titleField = NSTextField(labelWithString: "")
+    private let titleField = WidgetTitleLabel(labelWithString: "")
     private let dragArea = DragAreaView()
     private let resizeHandle = ResizeHandleView()
     private let interactionBlocker = InteractionBlockerView()
@@ -29,8 +32,9 @@ final class WidgetChromeView: NSView {
     private var isResizing = false
     private let resizeHandleHideDelay: TimeInterval = 2.0
 
-    init(webView: WKWebView) {
+    init(webView: WKWebView, preferences: AppPreferences) {
         self.webView = webView
+        self.preferences = preferences
         super.init(frame: .zero)
         configure()
     }
@@ -137,19 +141,21 @@ final class WidgetChromeView: NSView {
         dragArea.onDragStart = { [weak self] in
             guard let self, let window = self.window else { return }
             self.dragStartFrame = window.frame
+            self.placement.begin(window: window)
         }
         dragArea.onDrag = { [weak self] totalDeltaX, totalDeltaY in
-            guard let self, let window = self.window, let start = self.dragStartFrame else { return }
+            guard let self, let start = self.dragStartFrame else { return }
             var frame = start
             frame.origin.x = start.origin.x + totalDeltaX
             frame.origin.y = start.origin.y + totalDeltaY
-            window.setFrame(frame, display: true)
+            self.placement.update(frame: frame, pointer: NSEvent.mouseLocation, snap: self.preferences.snapToGrid)
         }
         dragArea.onDragEnd = { [weak self] in
-            guard let self, let window = self.window else { return }
+            guard let self else { return }
             self.dragStartFrame = nil
-            self.onFrameChange?(window.frame)
+            if let frame = self.placement.finish() { self.onFrameChange?(frame) }
         }
+        dragArea.onDragCancel = { [weak self] in self?.cancelDrag() }
 
         resizeHandle.onDragStart = { [weak self] in
             guard let self, let window = self.window else { return }
@@ -229,6 +235,17 @@ final class WidgetChromeView: NSView {
         ])
 
         setResizeHandleVisible(false, animated: false)
+    }
+
+    func cancelDrag() {
+        dragArea.stopDragging()
+        placement.cancel()
+        dragStartFrame = nil
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { cancelDrag() }
     }
 
     override func layout() {
@@ -372,30 +389,39 @@ private final class DragAreaView: NSVisualEffectView {
     var onDragStart: (() -> Void)?
     var onDrag: ((CGFloat, CGFloat) -> Void)?
     var onDragEnd: (() -> Void)?
-
+    var onDragCancel: (() -> Void)?
     private var startPoint: NSPoint = .zero
+    private var dragging = false
 
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
-        true
-    }
+    override var acceptsFirstResponder: Bool { true }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func mouseDown(with event: NSEvent) {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+        window?.makeFirstResponder(self)
         startPoint = NSEvent.mouseLocation
+        dragging = true
         onDragStart?()
     }
 
     override func mouseDragged(with event: NSEvent) {
+        guard dragging else { return }
         let point = NSEvent.mouseLocation
-        let totalDeltaX = point.x - startPoint.x
-        let totalDeltaY = point.y - startPoint.y
-        onDrag?(totalDeltaX, totalDeltaY)
+        onDrag?(point.x - startPoint.x, point.y - startPoint.y)
     }
 
     override func mouseUp(with event: NSEvent) {
+        guard dragging else { return }
+        dragging = false
         onDragEnd?()
     }
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 { cancelOperation(nil) } else { super.keyDown(with: event) }
+    }
+    override func cancelOperation(_ sender: Any?) { onDragCancel?() }
+    func stopDragging() { dragging = false }
 }
 
 @MainActor
@@ -521,4 +547,10 @@ private final class InteractionBlockerView: NSView {
     override func keyDown(with event: NSEvent) {}
     override func keyUp(with event: NSEvent) {}
     override func flagsChanged(with event: NSEvent) {}
+}
+
+@MainActor
+private final class WidgetTitleLabel: NSTextField {
+    // Header text belongs to the drag surface; buttons retain their own hit targets.
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }

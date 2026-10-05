@@ -55,3 +55,65 @@
 "hours" = "hours";
 "minutes" = "minutes";
 "seconds" = "seconds";
+
+// Widget management
+"Your desktop widgets" = "Your desktop widgets";
+"Keep the websites you use within reach." = "Keep the websites you use within reach.";
+"Widgets: %d · Visible: %d" = "Widgets: %d · Visible: %d";
+"A home for your favorite websites" = "A home for your favorite websites";
+"Add a dashboard, a document, or a page you check often. Move and resize it right on your desktop." = "Add a dashboard, a document, or a page you check often. Move and resize it right on your desktop.";
+"Create your first widget" = "Create your first widget";
+"Find by name or website" = "Find by name or website";
+"Clear search" = "Clear search";
+"Visible only" = "Visible only";
+"No matching widgets" = "No matching widgets";
+"Clear filters" = "Clear filters";
+"Move and resize widgets on your desktop. Open Edit for size, refresh, and interaction settings." = "Move and resize widgets on your desktop. Open Edit for size, refresh, and interaction settings.";
+"Edit Widget" = "Edit Widget";
+"Visible" = "Visible";
+"Hide widget" = "Hide widget";
+"Show widget" = "Show widget";
+"Widget actions" = "Widget actions";
+"A website, sized for your desktop." = "A website, sized for your desktop.";
+"Website URL" = "Website URL";
+"Name (optional)" = "Name (optional)";
+"e.g. Team dashboard" = "e.g. Team dashboard";
+"Behavior" = "Behavior";
+"Show on desktop" = "Show on desktop";
+"Auto-refresh" = "Auto-refresh";
+"Use 0 to refresh manually." = "Use 0 to refresh manually.";
+"Exact position" = "Exact position";
+"You can also drag and resize the widget directly on your desktop." = "You can also drag and resize the widget directly on your desktop.";
+"Changes apply when you save." = "Changes apply when you save.";
+"Save Changes" = "Save Changes";
+"Choose a preset" = "Choose a preset";
+"Use a size of at least 180 × 120 pixels." = "Use a size of at least 180 × 120 pixels.";
+"Enter valid position values and a refresh interval of 0 or more." = "Enter valid position values and a refresh interval of 0 or more.";
+"Open Settings from the menu bar, choose Features, then click Add Widget. Enter a website URL, choose a size, and save. Click a widget in the list to edit it." = "Open Settings from the menu bar, choose Features, then click Add Widget. Enter a website URL, choose a size, and save. Click a widget in the list to edit it.";
+"Features settings with the widget list and Add Widget button" = "Features settings with the widget list and Add Widget button";
+
+// Widget placement
+"Snap to grid" = "Snap to grid";
+"Align widgets when you drop them. Turn off for free placement." = "Align widgets when you drop them. Turn off for free placement.";
+"Drag the widget header to preview its new position. Enable Snap to grid in Features to align widgets when you drop them, or leave it off for free placement. Press Esc to cancel a move. Drag the corner handle to resize." = "Drag the widget header to preview its new position. Enable Snap to grid in Features to align widgets when you drop them, or leave it off for free placement. Press Esc to cancel a move. Drag the corner handle to resize.";
+
+// Website modes and cookies
+"Automatic" = "Automatic";
+"Mobile" = "Mobile";
+"Tablet" = "Tablet";
+"Desktop" = "Desktop";
+"Website mode" = "Website mode";
+"Automatic: mobile below 600 pt, tablet below 1024 pt, desktop at 1024 pt or wider." = "Automatic: mobile below 600 pt, tablet below 1024 pt, desktop at 1024 pt or wider.";
+"Reload when the device mode changes after resizing" = "Reload when the device mode changes after resizing";
+"Off: the new mode applies on the next reload. On: resizing across a size range reloads the page and may interrupt playback or unsaved input." = "Off: the new mode applies on the next reload. On: resizing across a size range reloads the page and may interrupt playback or unsaved input.";
+"Changing website mode and saving reloads the page when needed. Some websites do not support every mode." = "Changing website mode and saving reloads the page when needed. Some websites do not support every mode.";
+"Clear Website Cookies…" = "Clear Website Cookies…";
+"Clear website cookies?" = "Clear website cookies?";
+"Cookie removal finished" = "Cookie removal finished";
+"Deleted %d cookies." = "Deleted %d cookies.";
+"Some cookies are still present or were recreated by an open page. You can close the site's widgets and try again." = "Some cookies are still present or were recreated by an open page. You can close the site's widgets and try again.";
+"Reload the widget to update the displayed session. Cookies alone may not clear a login saved in local storage. Open websites can create cookies again." = "Reload the widget to update the displayed session. Cookies alone may not clear a login saved in local storage. Open websites can create cookies again.";
+"Remove cookies that apply to these websites in wewi, including shared parent-domain cookies. Other widgets that share those cookies may be signed out." = "Remove cookies that apply to these websites in wewi, including shared parent-domain cookies. Other widgets that share those cookies may be signed out.";
+"Cookies from unrelated websites, cached files, and local storage are kept. The page will not reload automatically." = "Cookies from unrelated websites, cached files, and local storage are kept. The page will not reload automatically.";
+"Removing cookies…" = "Removing cookies…";
+"Clear Cookies" = "Clear Cookies";

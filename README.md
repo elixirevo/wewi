@@ -42,11 +42,12 @@ Use it for dashboards, charts, docs, notes, and any URL you want to keep visible
 
 1. Launch `wewi.app`
 2. Open **Settings** from menu bar
-3. Select **Features**, then **Create New Widget**:
+3. Select **Features** and click **Add Widget**:
    - Enter Name + URL
    - Select size preset
    - Click **Add Widget**
-4. Manage widgets below the creation form (URL edits apply with **Apply URL** or Return).
+4. Search and show/hide widgets from the list. Click a widget to edit it, then choose **Save Changes**.
+5. Use the widget menu for reload and delete. Canceling the editor leaves the widget unchanged.
 
 ## 🚀 Build
 
@@ -110,9 +111,9 @@ make dmg-all
 Generated DMG filenames:
 
 ```text
-dist/wewi-1.0.2-arm64.dmg
-dist/wewi-1.0.2-x86_64.dmg
-dist/wewi-1.0.2-universal.dmg
+dist/wewi-1.2.0-arm64.dmg
+dist/wewi-1.2.0-x86_64.dmg
+dist/wewi-1.2.0-universal.dmg
 ```
 
 Note:
@@ -147,21 +148,21 @@ sparkle-public-key.txt
 Create a DMG and Sparkle appcast for a GitHub Release:
 
 ```bash
-APP_VERSION=1.0.2 APP_BUILD=3 make appcast
+APP_VERSION=1.2.0 APP_BUILD=10 make appcast
 ```
 
 For public distribution, sign and notarize the final DMG before generating the appcast signature. If you notarize/staple the DMG separately, reuse that final DMG:
 
 ```bash
-APP_VERSION=1.0.2 APP_BUILD=3 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make dmg-universal
-# notarize and staple dist/wewi-1.0.2-universal.dmg
-APP_VERSION=1.0.2 SKIP_DMG_BUILD=1 make appcast
+APP_VERSION=1.2.0 APP_BUILD=10 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make dmg-universal
+# notarize and staple dist/wewi-1.2.0-universal.dmg
+APP_VERSION=1.2.0 SKIP_DMG_BUILD=1 make appcast
 ```
 
-Upload both generated files to the matching GitHub Release tag, e.g. `v1.0.2`:
+Upload both generated files to the matching GitHub Release tag, e.g. `v1.2.0`:
 
 ```text
-dist/wewi-1.0.2-universal.dmg
+dist/wewi-1.2.0-universal.dmg
 dist/appcast/appcast.xml
 ```
 
@@ -169,7 +170,7 @@ Useful overrides:
 
 ```bash
 SPARKLE_FEED_URL=https://example.com/appcast.xml make app
-GITHUB_REPOSITORY=elixirevo/wewi RELEASE_TAG=v1.0.2 make appcast
+GITHUB_REPOSITORY=elixirevo/wewi RELEASE_TAG=v1.2.0 make appcast
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make appcast
 ```
 
@@ -187,10 +188,10 @@ brew tap elixirevo/tap
 brew install --cask elixirevo/tap/wewi
 ```
 
-Local cask test from this repository:
+The cask in this repository is a release template. The shared pipeline generates final hashes and updates the tap. To test the generated cask:
 
 ```bash
-brew install --cask ./Casks/wewi.rb
+brew install --cask ./dist/deploy/1.2.0/wewi.rb
 ```
 
 For maintainers:
@@ -264,3 +265,41 @@ including provision of corresponding source for wewi and the exact library versi
 used. Sparkle and Sentry retain their own licenses. Bundled notices are in
 `Sources/wewi/Resources/ThirdPartyNotices.txt`. This integration was verified against
 MacAppEssentials 0.5.1, revision `b3e36a462ea6da4ba3d3272c08526765d9aca3c0`.
+
+### Widget placement
+
+Drag a widget's header to see its destination, then release to place it. In **Settings → Features**, enable **Snap to grid** to align the top-left corner to a 24-point grid on the target display. Screen edges take priority when the widget would extend beyond the usable area. The setting defaults to off; leaving it off preserves free placement. Changing it does not rearrange existing widgets. Press **Esc** during a drag to restore the starting position. Resizing stays free-form.
+
+For an offline drag check with disposable settings, launch `dist/wewi.app --preview --page features --placement-demo` (or pass those arguments with `open -n ... --args`). The fixture uses local HTML and does not start website networking, updates, or crash reporting.
+
+### Website mode and cookies
+
+Each widget has **Automatic / Mobile / Tablet / Desktop** website modes in its editor. Automatic selects a Safari user agent using the widget content width: mobile below 600 pt, tablet from 600 to below 1024 pt, and desktop at 1024 pt or above. This requests a different site presentation; it does not emulate touch hardware or guarantee every site supports every mode. Existing widgets keep Desktop; new widgets use Automatic.
+
+**Reload when the device mode changes after resizing** is off by default. When off, the UA stays unchanged until the next manual or timed reload. When on, a size-range change after resizing triggers one reload. Saving a different mode reloads if its effective device changes. Reloading may interrupt media playback or unsaved form input.
+
+Use a widget's **… → Clear Website Cookies…** to review and delete cookies for its configured host and currently open host. Parent-domain cookies also apply and may sign out other wewi widgets. Cookies for unrelated hosts, cache, and local storage are kept. The result reports the deletion count, and you can manually reload when ready. The preview uses a separate nonpersistent cookie store.
+
+### Signed release pipeline
+
+`ReleaseInfo.plist` is the version source. Version 1.2.0 uses Intel build 9 and
+Apple Silicon build 10; both exceed the previous release's builds 7/8.
+`deploy.json` connects the existing builder to `../tools/deploy`. The shared
+notary profile `menubox` belongs to the same Developer ID account; override it
+with `NOTARY_PROFILE` when needed. `SPARKLE_KEY_ACCOUNT` must resolve to the
+**existing** key matching `sparkle-public-key.txt`; never generate a replacement
+key for an update to existing users.
+
+```bash
+export SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+# Set NOTARY_PROFILE / SPARKLE_KEY_ACCOUNT to existing Keychain entries if needed.
+../tools/deploy/deploy.sh . doctor
+../tools/deploy/deploy.sh . prepare
+# Commit reviewed source and release notes before publishing.
+../tools/deploy/deploy.sh . publish
+```
+
+The pipeline signs and notarizes separate Apple Silicon and Intel apps/DMGs,
+verifies Sparkle signatures, uploads matching dSYMs to Sentry, publishes the
+GitHub release, and updates the Homebrew tap. Release artifacts are in
+`dist/deploy/1.2.0/`. dSYMs stay outside the public release assets.

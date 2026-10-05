@@ -55,3 +55,65 @@
 "hours" = "시간";
 "minutes" = "분";
 "seconds" = "초";
+
+// Widget management
+"Your desktop widgets" = "내 데스크톱 위젯";
+"Keep the websites you use within reach." = "자주 사용하는 웹사이트를 가까이에 두세요.";
+"Widgets: %d · Visible: %d" = "위젯 %d개 · 표시 중 %d개";
+"A home for your favorite websites" = "자주 보는 웹사이트를 한곳에";
+"Add a dashboard, a document, or a page you check often. Move and resize it right on your desktop." = "대시보드, 문서, 자주 확인하는 페이지를 추가하세요. 데스크톱에서 바로 옮기고 크기를 조절할 수 있습니다.";
+"Create your first widget" = "첫 위젯 만들기";
+"Find by name or website" = "이름 또는 웹사이트 검색";
+"Clear search" = "검색 지우기";
+"Visible only" = "표시 중만";
+"No matching widgets" = "조건에 맞는 위젯이 없습니다";
+"Clear filters" = "필터 초기화";
+"Move and resize widgets on your desktop. Open Edit for size, refresh, and interaction settings." = "데스크톱에서 위젯을 옮기거나 크기를 조절하세요. 편집에서 크기·새로고침·조작 설정을 변경할 수 있습니다.";
+"Edit Widget" = "위젯 편집";
+"Visible" = "표시 여부";
+"Hide widget" = "위젯 숨기기";
+"Show widget" = "위젯 표시";
+"Widget actions" = "위젯 작업";
+"A website, sized for your desktop." = "내 데스크톱에 맞는 웹사이트 위젯";
+"Website URL" = "웹사이트 URL";
+"Name (optional)" = "이름 (선택 사항)";
+"e.g. Team dashboard" = "예: 팀 대시보드";
+"Behavior" = "동작";
+"Show on desktop" = "데스크톱에 표시";
+"Auto-refresh" = "자동 새로고침";
+"Use 0 to refresh manually." = "0으로 설정하면 수동으로 새로고침합니다.";
+"Exact position" = "정확한 위치";
+"You can also drag and resize the widget directly on your desktop." = "데스크톱에서 위젯을 직접 드래그하고 크기를 조절할 수도 있습니다.";
+"Changes apply when you save." = "저장하면 변경 사항이 적용됩니다.";
+"Save Changes" = "변경 사항 저장";
+"Choose a preset" = "크기 선택";
+"Use a size of at least 180 × 120 pixels." = "180 × 120 픽셀 이상의 크기를 입력하세요.";
+"Enter valid position values and a refresh interval of 0 or more." = "올바른 위치 값과 0 이상의 새로고침 간격을 입력하세요.";
+"Open Settings from the menu bar, choose Features, then click Add Widget. Enter a website URL, choose a size, and save. Click a widget in the list to edit it." = "메뉴바에서 설정 > 기능을 열고 위젯 추가를 누르세요. 웹사이트 URL과 크기를 입력해 저장하세요. 목록의 위젯을 누르면 편집할 수 있습니다.";
+"Features settings with the widget list and Add Widget button" = "위젯 목록과 위젯 추가 버튼이 있는 기능 설정 화면";
+
+// Widget placement
+"Snap to grid" = "격자에 맞춰 배치";
+"Align widgets when you drop them. Turn off for free placement." = "놓을 때 격자에 맞춰 정렬합니다. 끄면 자유롭게 배치할 수 있습니다.";
+"Drag the widget header to preview its new position. Enable Snap to grid in Features to align widgets when you drop them, or leave it off for free placement. Press Esc to cancel a move. Drag the corner handle to resize." = "위젯 상단을 드래그하면 배치할 위치가 표시됩니다. 기능 설정에서 격자에 맞춰 배치를 켜면 놓을 때 정렬되고, 끄면 자유롭게 배치됩니다. Esc로 이동을 취소하고 모서리 손잡이로 크기를 조절하세요.";
+
+// Website modes and cookies
+"Automatic" = "자동";
+"Mobile" = "모바일";
+"Tablet" = "태블릿";
+"Desktop" = "데스크톱";
+"Website mode" = "웹사이트 모드";
+"Automatic: mobile below 600 pt, tablet below 1024 pt, desktop at 1024 pt or wider." = "자동 모드: 너비 600pt 미만은 모바일, 1024pt 미만은 태블릿, 그 이상은 데스크톱으로 표시합니다.";
+"Reload when the device mode changes after resizing" = "크기 변경으로 기기 모드가 바뀌면 자동 새로고침";
+"Off: the new mode applies on the next reload. On: resizing across a size range reloads the page and may interrupt playback or unsaved input." = "끄면 다음 새로고침 때 새 모드를 적용합니다. 켜면 크기 구간이 바뀔 때 새로고침하며, 재생이나 저장하지 않은 입력이 중단될 수 있습니다.";
+"Changing website mode and saving reloads the page when needed. Some websites do not support every mode." = "웹사이트 모드를 바꾸고 저장하면 필요한 경우 새로고침합니다. 사이트에 따라 일부 모드를 지원하지 않을 수 있습니다.";
+"Clear Website Cookies…" = "웹사이트 쿠키 삭제…";
+"Clear website cookies?" = "웹사이트 쿠키를 삭제할까요?";
+"Cookie removal finished" = "쿠키 삭제 완료";
+"Deleted %d cookies." = "쿠키 %d개를 삭제했습니다.";
+"Some cookies are still present or were recreated by an open page. You can close the site's widgets and try again." = "일부 쿠키가 남아 있거나 열린 페이지에서 다시 생성되었습니다. 해당 사이트의 위젯을 닫은 뒤 다시 시도할 수 있습니다.";
+"Reload the widget to update the displayed session. Cookies alone may not clear a login saved in local storage. Open websites can create cookies again." = "위젯을 새로고침하면 화면의 세션 상태가 갱신됩니다. 로컬 저장소에 보관된 로그인은 쿠키 삭제만으로 해제되지 않을 수 있습니다. 열린 웹사이트는 쿠키를 다시 만들 수 있습니다.";
+"Remove cookies that apply to these websites in wewi, including shared parent-domain cookies. Other widgets that share those cookies may be signed out." = "wewi에서 이 웹사이트에 적용되는 쿠키와 공유 상위 도메인 쿠키를 삭제합니다. 같은 쿠키를 사용하는 다른 위젯도 로그아웃될 수 있습니다.";
+"Cookies from unrelated websites, cached files, and local storage are kept. The page will not reload automatically." = "관련 없는 웹사이트의 쿠키, 캐시와 로컬 저장소는 유지합니다. 페이지는 자동으로 새로고침하지 않습니다.";
+"Removing cookies…" = "쿠키 삭제 중…";
+"Clear Cookies" = "쿠키 삭제";

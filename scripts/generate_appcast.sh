@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="wewi"
-APP_VERSION="${APP_VERSION:-1.0.2}"
+APP_VERSION="${APP_VERSION:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT_DIR/ReleaseInfo.plist")}"
 ARCH="${1:-${ARCH:-universal}}"
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-elixirevo/wewi}"
 RELEASE_TAG="${RELEASE_TAG:-v$APP_VERSION}"

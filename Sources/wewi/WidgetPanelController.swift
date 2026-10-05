@@ -7,6 +7,7 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
     private(set) var config: WidgetConfig
 
     private let panel: NSPanel
+    private let preview: Bool
     private let webView: WKWebView
     private let chromeView: WidgetChromeView
     private var onFrameChanged: ((UUID, WidgetFrame) -> Void)?
@@ -14,6 +15,8 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
     private var onScrollPositionChanged: ((UUID, Double, Double) -> Void)?
     private var onDisableRequested: ((UUID) -> Void)?
     private var lastRequestedURLString: String?
+    private var loadedDevice: WidgetBrowserDevice?
+    var currentWebsiteURL: URL? { webView.url }
     private var loadRetryWorkItem: DispatchWorkItem?
     private var loadRetryCount = 0
     private let maxLoadRetryCount = 4
@@ -24,12 +27,16 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
 
     init(
         config: WidgetConfig,
+        preferences: AppPreferences,
+        preview: Bool = false,
+        websiteDataStore: WKWebsiteDataStore = .default(),
         onFrameChanged: ((UUID, WidgetFrame) -> Void)? = nil,
         onInteractionChanged: ((UUID, Bool) -> Void)? = nil,
         onScrollPositionChanged: ((UUID, Double, Double) -> Void)? = nil,
         onDisableRequested: ((UUID) -> Void)? = nil
     ) {
         self.id = config.id
+        self.preview = preview
         self.config = config
         self.onFrameChanged = onFrameChanged
         self.onInteractionChanged = onInteractionChanged
@@ -45,9 +52,10 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         self.panel = panel
 
         let webConfig = WKWebViewConfiguration()
+        webConfig.websiteDataStore = websiteDataStore
         webConfig.limitsNavigationsToAppBoundDomains = false
         self.webView = ActivatingWebView(frame: .zero, configuration: webConfig)
-        self.chromeView = WidgetChromeView(webView: webView)
+        self.chromeView = WidgetChromeView(webView: webView, preferences: preferences)
 
         super.init()
         configurePanel()
@@ -55,6 +63,10 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         configureScreenObservation()
         configureAppearanceObservation()
         apply(config: config)
+        if preview {
+            loadPreviewPage()
+        }
+        NotificationCenter.default.addObserver(self, selector: #selector(cancelPlacement), name: NSApplication.didResignActiveNotification, object: nil)
     }
 
     private func configurePanel() {
@@ -64,7 +76,7 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         panel.hasShadow = false
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
-        panel.isMovableByWindowBackground = true
+        panel.isMovableByWindowBackground = false
         panel.becomesKeyOnlyIfNeeded = false
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.level = .init(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
@@ -74,29 +86,11 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
 
     private func configureWebView() {
         webView.setValue(false, forKey: "drawsBackground")
-        webView.customUserAgent = Self.supportedDesktopSafariUserAgent()
         webView.navigationDelegate = self
     }
 
-    private static func supportedDesktopSafariUserAgent() -> String {
-        // Some providers reject embedded WKWebView UAs. Use a Safari-like desktop UA.
-        let version = ProcessInfo.processInfo.operatingSystemVersion
-        let macOS = "10_15_7"
-        let safariVersion: String
-        switch version.majorVersion {
-        case 15:
-            safariVersion = "18.0"
-        case 14:
-            safariVersion = "17.0"
-        case 13:
-            safariVersion = "16.0"
-        default:
-            safariVersion = "17.0"
-        }
-        return "Mozilla/5.0 (Macintosh; Intel Mac OS X \(macOS)) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/\(safariVersion) Safari/605.1.15"
-    }
-
     func apply(config: WidgetConfig) {
+        let previous = self.config
         self.config = config
         panel.title = config.name
         webView.alphaValue = CGFloat(max(0.05, min(1.0, config.opacity)))
@@ -126,19 +120,43 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         )
 
         let targetFrame = config.frame.cgRect
-        if !panel.frame.isApproximatelyEqual(to: targetFrame, tolerance: 0.5) {
+        if !chromeView.isDragging && !panel.frame.isApproximatelyEqual(to: targetFrame, tolerance: 0.5) {
             panel.setFrame(targetFrame, display: true)
         }
         updateVisibilityForCurrentScreens()
-        applyAutoRefreshInterval(config.normalizedRefreshIntervalSeconds)
+        if !preview { applyAutoRefreshInterval(config.normalizedRefreshIntervalSeconds) }
 
-        if let url = config.url, lastRequestedURLString != config.urlString {
+        panel.contentView?.layoutSubtreeIfNeeded()
+        let urlChanged = lastRequestedURLString != config.urlString
+        if loadedDevice == nil || urlChanged { applyUserAgent() }
+        if !preview, let url = config.url, urlChanged {
             loadRetryCount = 0
             loadRetryWorkItem?.cancel()
             let request = URLRequest(url: url)
             webView.load(request)
             lastRequestedURLString = config.urlString
+        } else if WidgetBrowsingPolicy.shouldReload(loaded: loadedDevice, previous: previous, next: config) {
+            reload()
         }
+        if preview { lastRequestedURLString = config.urlString }
+    }
+
+    private func applyUserAgent() {
+        let device = config.browsingMode.device(for: config.frame.width)
+        webView.customUserAgent = device.userAgent
+        loadedDevice = device
+    }
+
+    private func loadPreviewPage() {
+        webView.loadHTMLString("""
+            <html><body style="font:18px system-ui;background:#182333;color:white;padding:24px;overflow-wrap:anywhere">
+            <h2>wewi</h2><p>Offline widget preview</p><input placeholder="Try typing here">
+            <p id="ua"></p><p id="size"></p><script>
+            document.getElementById('ua').textContent = navigator.userAgent;
+            function showSize() { document.getElementById('size').textContent = innerWidth + ' × ' + innerHeight; }
+            showSize(); addEventListener('resize', showSize);
+            </script></body></html>
+            """, baseURL: nil)
     }
 
     func show() {
@@ -147,11 +165,14 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
     }
 
     func hide() {
+        chromeView.cancelDrag()
         isHiddenForUnavailableScreen = false
         panel.orderOut(nil)
     }
 
     func close() {
+        chromeView.cancelDrag()
+        NotificationCenter.default.removeObserver(self, name: NSApplication.didResignActiveNotification, object: nil)
         loadRetryWorkItem?.cancel()
         autoRefreshTimer?.invalidate()
         autoRefreshTimer = nil
@@ -169,9 +190,10 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
     }
 
     func reload() {
+        applyUserAgent()
         loadRetryCount = 0
         loadRetryWorkItem?.cancel()
-        webView.reload()
+        if preview { loadPreviewPage() } else { webView.reload() }
     }
 
     private func applyAutoRefreshInterval(_ intervalSeconds: Double) {
@@ -222,6 +244,7 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
 
     @objc
     private func handleScreenParametersChanged() {
+        chromeView.cancelDrag()
         updateVisibilityForCurrentScreens()
     }
 
@@ -230,12 +253,16 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
         applyWebColorScheme()
     }
 
+    @objc private func cancelPlacement() { chromeView.cancelDrag() }
+
+    func windowWillClose(_ notification: Notification) { chromeView.cancelDrag() }
+
     private func updateVisibilityForCurrentScreens() {
         let targetFrame = config.frame.cgRect
         let hasVisibleScreen = availableScreenRects().contains { $0.intersects(targetFrame) }
 
         if hasVisibleScreen {
-            if !panel.frame.isApproximatelyEqual(to: targetFrame, tolerance: 0.5) {
+            if !chromeView.isDragging && !panel.frame.isApproximatelyEqual(to: targetFrame, tolerance: 0.5) {
                 panel.setFrame(targetFrame, display: true)
             }
             if isHiddenForUnavailableScreen {
@@ -355,6 +382,7 @@ final class WidgetPanelController: NSObject, NSWindowDelegate, WKNavigationDeleg
     }
 
     private func scheduleLoadRetry(for error: Error) {
+        guard !preview else { return }
         let nsError = error as NSError
         if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
             return

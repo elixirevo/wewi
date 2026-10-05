@@ -13,8 +13,12 @@ final class AppPreferences: ObservableObject {
     @Published var appearance: Appearance {
         didSet { defaults.set(appearance.rawValue, forKey: "wewi.appearance"); applyAppearance() }
     }
+    @Published var snapToGrid: Bool {
+        didSet { defaults.set(snapToGrid, forKey: "wewi.snapToGrid") }
+    }
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        snapToGrid = defaults.bool(forKey: "wewi.snapToGrid")
         appearance = Appearance(rawValue: defaults.string(forKey: "wewi.appearance") ?? "") ?? .system
     }
     func applyAppearance() {

@@ -75,6 +75,28 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(config["appIdentifier"] as? String, "com.elixirevo.wewi")
         XCTAssertTrue((config["dsn"] as? String)?.contains(".ingest.us.sentry.io/") == true)
     }
+    func testSavingEditsPreservesConcurrentDesktopChanges() {
+        let original = WidgetConfig(name: "Original", urlString: "https://example.com", frame: .init(x: 80, y: 80, width: 480, height: 320))
+        var edited = original
+        edited.name = "Renamed"
+        edited.frame.width = 640
+        var current = original
+        current.frame.x = 240
+        current.frame.height = 400
+        current.scrollY = 180
+        current.isEnabled = false
+        let merged = WidgetEdits.merging(original: original, edited: edited, current: current)
+        XCTAssertEqual(merged.name, "Renamed")
+        XCTAssertEqual(merged.frame.width, 640)
+        XCTAssertEqual(merged.frame.x, 240)
+        XCTAssertEqual(merged.frame.height, 400)
+        XCTAssertEqual(merged.scrollY, 180)
+        XCTAssertFalse(merged.isEnabled)
+        edited.urlString = "https://example.com/new"
+        let changedURL = WidgetEdits.merging(original: original, edited: edited, current: current)
+        XCTAssertEqual(changedURL.scrollY, 0)
+        XCTAssertEqual(changedURL.urlString, edited.urlString)
+    }
     func testWidgetURLValidation() {
         XCTAssertTrue(WidgetInput.validURL("https://example.com/dashboard"))
         XCTAssertTrue(WidgetInput.validURL(" http://localhost:8080 "))
