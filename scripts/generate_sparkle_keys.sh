@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SPARKLE_KEY_ACCOUNT="${SPARKLE_KEY_ACCOUNT:-wewi}"
 SPARKLE_PUBLIC_ED_KEY_FILE="${SPARKLE_PUBLIC_ED_KEY_FILE:-$ROOT_DIR/sparkle-public-key.txt}"
 SPARKLE_GENERATE_KEYS="${SPARKLE_GENERATE_KEYS:-}"
 
@@ -32,7 +33,7 @@ if [[ -z "$SPARKLE_GENERATE_KEYS" || ! -x "$SPARKLE_GENERATE_KEYS" ]]; then
   exit 1
 fi
 
-OUTPUT="$("$SPARKLE_GENERATE_KEYS")"
+OUTPUT="$("$SPARKLE_GENERATE_KEYS" --account "$SPARKLE_KEY_ACCOUNT")"
 printf '%s\n' "$OUTPUT"
 
 PUBLIC_KEY="$(printf '%s\n' "$OUTPUT" | sed -n 's/.*<string>\([^<]*\)<\/string>.*/\1/p' | head -n 1)"

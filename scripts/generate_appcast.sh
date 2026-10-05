@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SPARKLE_KEY_ACCOUNT="${SPARKLE_KEY_ACCOUNT:-wewi}"
 APP_NAME="wewi"
 APP_VERSION="${APP_VERSION:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT_DIR/ReleaseInfo.plist")}"
 ARCH="${1:-${ARCH:-universal}}"
@@ -57,6 +58,7 @@ mkdir -p "$APPCAST_ARCHIVE_DIR"
 cp "$DMG_PATH" "$APPCAST_ARCHIVE_DIR/"
 
 "$SPARKLE_GENERATE_APPCAST" \
+  --account "$SPARKLE_KEY_ACCOUNT" \
   --download-url-prefix "$SPARKLE_DOWNLOAD_URL_PREFIX" \
   --link "$SPARKLE_PRODUCT_LINK" \
   --maximum-versions "$SPARKLE_MAXIMUM_VERSIONS" \

@@ -287,8 +287,10 @@ Apple Silicon build 10; both exceed the previous release's builds 7/8.
 `deploy.json` connects the existing builder to `../tools/deploy`. The shared
 notary profile `menubox` belongs to the same Developer ID account; override it
 with `NOTARY_PROFILE` when needed. `SPARKLE_KEY_ACCOUNT` must resolve to the
-**existing** key matching `sparkle-public-key.txt`; never generate a replacement
-key for an update to existing users.
+key matching `sparkle-public-key.txt`. Version 1.2.0 starts a new key stored
+in the `wewi` account because the previous private key is unavailable. Users of
+1.1.2 and earlier must install 1.2.0 manually; subsequent updates use the new key.
+Preserve this key for future releases.
 
 ```bash
 export SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
