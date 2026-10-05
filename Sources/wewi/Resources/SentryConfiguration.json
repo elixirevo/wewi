@@ -1,0 +1,8 @@
+{
+  "appIdentifier": "com.elixirevo.wewi",
+  "dsn": "https://4c31380d52e068909aba54d88bc01374@o4512192516390912.ingest.us.sentry.io/4512201427845120",
+  "environment": "production",
+  "organization": "elixirevo",
+  "project": "wewi",
+  "schemaVersion": 1
+}

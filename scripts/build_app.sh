@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ -z "${DEVELOPER_DIR:-}" && -d /Applications/Xcode.app/Contents/Developer ]]; then
+  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+fi
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="wewi"
@@ -22,25 +25,35 @@ if [[ -z "$SPARKLE_PUBLIC_ED_KEY" && -f "$SPARKLE_PUBLIC_ED_KEY_FILE" ]]; then
   SPARKLE_PUBLIC_ED_KEY="$(tr -d '[:space:]' < "$SPARKLE_PUBLIC_ED_KEY_FILE")"
 fi
 
+cd "$ROOT_DIR"
+SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
+SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
+SDK_ARGS=(--sdk "$SDK_PATH" -Xlinker -platform_version -Xlinker macos -Xlinker 13.0 -Xlinker "$SDK_VERSION")
+
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
 mkdir -p "$FRAMEWORKS_DIR"
 
 if [[ "$ARCH" == "universal" ]]; then
-  swift build -c release --arch arm64
-  ARM_BIN_PATH="$(swift build -c release --arch arm64 --show-bin-path)"
+  swift build -c release --arch arm64 "${SDK_ARGS[@]}"
+  ARM_BIN_PATH="$(swift build -c release --arch arm64 "${SDK_ARGS[@]}" --show-bin-path)"
 
-  swift build -c release --arch x86_64
-  X86_BIN_PATH="$(swift build -c release --arch x86_64 --show-bin-path)"
+  # Swift Build may reuse the same output directory for different architectures.
+  cp "$ARM_BIN_PATH/$APP_NAME" "$MACOS_DIR/$APP_NAME.arm64"
+
+  swift build -c release --arch x86_64 "${SDK_ARGS[@]}"
+  X86_BIN_PATH="$(swift build -c release --arch x86_64 "${SDK_ARGS[@]}" --show-bin-path)"
 
   lipo -create \
-    "$ARM_BIN_PATH/$APP_NAME" \
+    "$MACOS_DIR/$APP_NAME.arm64" \
     "$X86_BIN_PATH/$APP_NAME" \
     -output "$MACOS_DIR/$APP_NAME"
   chmod +x "$MACOS_DIR/$APP_NAME"
+  rm "$MACOS_DIR/$APP_NAME.arm64"
+  BIN_PATH="$X86_BIN_PATH"
 else
-  BUILD_ARGS=(-c release)
+  BUILD_ARGS=(-c release "${SDK_ARGS[@]}")
   if [[ -n "$ARCH" ]]; then
     BUILD_ARGS+=(--arch "$ARCH")
   fi
@@ -50,6 +63,36 @@ else
   cp "$BIN_PATH/$APP_NAME" "$MACOS_DIR/$APP_NAME"
   chmod +x "$MACOS_DIR/$APP_NAME"
 fi
+
+for bundle in wewi_wewi MacAppEssentials_MacAppSettings MacAppEssentials_MacAppOnboarding MacAppEssentials_MacAppMenuBar MacAppEssentials_MacAppMainMenu; do
+  test -d "$BIN_PATH/$bundle.bundle"
+  ditto "$BIN_PATH/$bundle.bundle" "$RESOURCES_DIR/$bundle.bundle"
+done
+# Includes dependency privacy manifests when emitted by SwiftPM.
+for bundle in "$BIN_PATH"/*.bundle; do
+  [[ -d "$bundle" ]] || continue
+  ditto "$bundle" "$RESOURCES_DIR/$(basename "$bundle")"
+done
+# Sentry is statically linked; SwiftPM does not copy its framework resources.
+SENTRY_RESOURCES="$ROOT_DIR/.build/artifacts/sentry-cocoa/Sentry/Sentry.xcframework/macos-arm64_arm64e_x86_64/Sentry.framework/Versions/A/Resources"
+test -f "$SENTRY_RESOURCES/PrivacyInfo.xcprivacy"
+mkdir -p "$RESOURCES_DIR/SentryResources.bundle/Contents/Resources"
+cp "$SENTRY_RESOURCES/PrivacyInfo.xcprivacy" "$RESOURCES_DIR/SentryResources.bundle/Contents/Resources/PrivacyInfo.xcprivacy"
+cat > "$RESOURCES_DIR/SentryResources.bundle/Contents/Info.plist" <<'SENTRY_PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>CFBundleIdentifier</key><string>com.elixirevo.wewi.SentryResources</string><key>CFBundlePackageType</key><string>BNDL</string></dict></plist>
+SENTRY_PLIST
+BUILD_INFO="$(xcrun vtool -show-build "$MACOS_DIR/$APP_NAME")"
+printf '%s\n' "$BUILD_INFO"
+# Validate every slice; deployment target and SDK must not collapse to the same value.
+while read -r field value; do
+  case "$field" in
+    minos) [[ "$value" == "13.0" ]] || exit 1 ;;
+    sdk) [[ "$value" == "$SDK_VERSION" ]] || exit 1 ;;
+  esac
+done < <(awk '$1 == "minos" || $1 == "sdk" { print $1, $2 }' <<< "$BUILD_INFO")
+dsymutil "$MACOS_DIR/$APP_NAME" -o "$ROOT_DIR/dist/$APP_BUNDLE_NAME.app.dSYM"
 
 if ! otool -l "$MACOS_DIR/$APP_NAME" | grep -q "@executable_path/../Frameworks"; then
   install_name_tool -add_rpath "@executable_path/../Frameworks" "$MACOS_DIR/$APP_NAME"
@@ -112,6 +155,11 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key><array><string>en</string><string>ko</string></array>
+  <key>NSHumanReadableCopyright</key><string>© 2026 elixirevo</string>
+  <key>SUEnableSystemProfiling</key><false/>
+  <key>SUAutomaticallyUpdate</key><false/>
   <key>LSUIElement</key>
   <true/>
   <key>NSHighResolutionCapable</key>

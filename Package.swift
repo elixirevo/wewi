@@ -1,24 +1,27 @@
 // swift-tools-version: 6.2
-
 import PackageDescription
 
 let package = Package(
     name: "wewi",
-    platforms: [
-        .macOS(.v13)
-    ],
-    products: [
-        .executable(name: "wewi", targets: ["wewi"])
-    ],
+    defaultLocalization: "en",
+    platforms: [.macOS(.v13)],
+    products: [.executable(name: "wewi", targets: ["wewi"])],
     dependencies: [
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.0.0")
+        .package(name: "MacAppEssentials", path: "../tools/library"),
+        .package(path: "../tools/library/Integrations/MacAppUpdatesSparkle"),
+        .package(path: "../tools/library/Integrations/MacAppDiagnosticsSentry")
     ],
     targets: [
-        .executableTarget(
-            name: "wewi",
-            dependencies: [
-                .product(name: "Sparkle", package: "Sparkle")
-            ]
-        )
+        .executableTarget(name: "wewi", dependencies: [
+            .product(name: "MacAppCore", package: "MacAppEssentials"),
+            .product(name: "MacAppSettings", package: "MacAppEssentials"),
+            .product(name: "MacAppMenuBar", package: "MacAppEssentials"),
+            .product(name: "MacAppMainMenu", package: "MacAppEssentials"),
+            .product(name: "MacAppLifecycle", package: "MacAppEssentials"),
+            .product(name: "MacAppOnboarding", package: "MacAppEssentials"),
+            .product(name: "MacAppUpdatesSparkle", package: "MacAppUpdatesSparkle"),
+            .product(name: "MacAppDiagnosticsSentry", package: "MacAppDiagnosticsSentry")
+        ], resources: [.process("Resources")]),
+        .testTarget(name: "wewiTests", dependencies: ["wewi"])
     ]
 )

@@ -7,7 +7,8 @@ struct WewiMain {
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate
-        app.setActivationPolicy(.accessory)
-        app.run()
+        do { try delegate.lifecycle.start() }
+        catch { NSAlert(error: error).runModal(); return }
+        withExtendedLifetime(delegate) { app.run() }
     }
 }

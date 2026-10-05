@@ -1,0 +1,41 @@
+wewi Terms of Use
+Version: 2026-10-05 · Effective: October 5, 2026
+
+1. Operator and scope
+elixirevo provides wewi, a free macOS utility that displays websites as desktop widgets. Contact for support and complaints: elixirevo@gmail.com. Website and release notices: https://github.com/elixirevo/wewi. Current documents are included under Settings > Help & Support; previous versions remain in the repository history.
+
+2. Agreement
+Read these Terms before use. The checkbox and explicit acceptance button record your agreement to this version locally. Closing the required agreement exits the app. Onboarding completion, operating system permissions and optional crash reporting are separate choices. This utility is intended for adults able to enter into an agreement under applicable law.
+
+3. Software license
+wewi's original code retains its MIT license. MacAppEssentials and its integration adapters use GPL-3.0-only, and the combined distribution must comply with that license. Sparkle and Sentry retain their own licenses. The included Open Source Licenses and applicable source licenses govern copying, modification and redistribution; these Terms do not restrict rights granted by those licenses. Source: https://github.com/elixirevo/wewi and https://github.com/elixirevo/mac-app-essentials.
+
+4. Your use and content
+Use websites and content only as authorized by their owners and applicable law. You retain rights to your own content. Do not infringe rights, bypass service access controls or disrupt others' systems. You control widget URLs and any login or information entered into websites. Screen Lock only blocks web interaction; it is not authentication, encryption or a privacy screen. Content can remain visible to people viewing your display. Keep independent copies of important information.
+
+5. Privacy
+The Privacy Policy explains local widget settings, WebKit website data, update requests, optional crash reports and support messages. It is available in onboarding and Settings > Help & Support. Accepting these Terms does not opt you into crash reporting or serve as blanket consent to unrelated processing.
+
+6. Free use
+Current features are free. There is no paid purchase or subscription through this app, and no usage fee to refund. Future paid features require separate price information and purchase authorization. Existing use never authorizes charges.
+
+7. Ending use and support
+You may quit and uninstall wewi at any time. Deleting the app may leave preferences and website data on your Mac. Contact the operator for support or complaints. Mandatory consumer remedies remain available even though the current app is free.
+
+8. Updates and changes
+Updates address bugs, security and compatibility. You control automatic checks in Settings > Software Update. The app contacts GitHub Releases for updates. Material feature reductions or discontinuation are ordinarily announced at least 30 days ahead in release notices; urgent security or legal reasons may require earlier action, with reasons explained promptly. Installing a release does not authorize additional payment.
+
+9. Restrictions
+Unlawful use or material breaches may lead to restrictions permitted by applicable law. Where feasible, the operator explains the reason and permits correction before restricting access. You may contest a restriction by email. The current app has no operator account service or remote account suspension mechanism.
+
+10. Warranties and liability
+Open-source license warranty terms apply to the extent permitted by law. Operation depends on macOS, networks and the websites you choose, and is not guaranteed to be uninterrupted or error-free. Nothing excludes liability that cannot lawfully be excluded, including applicable liability for intentional misconduct, gross negligence or personal injury. Consumers are not subject to a blanket indemnity obligation.
+
+11. External services
+Websites displayed by widgets are independent services with their own terms and policies. They may change, reject embedded browsers, require authentication or stop working. wewi does not control their content, availability or prices. This does not waive the operator's own legal duties. This distribution uses GitHub Releases, not the Mac App Store.
+
+12. Changes to these Terms
+Ordinary changes are announced at least seven days ahead and material or unfavorable changes at least 30 days ahead through release notices and the app, subject to longer mandatory periods. The app presents the full changed Terms and requests explicit acceptance when required. Silence alone is not acceptance, and changes do not apply retroactively to disputes. Declining changed Terms exits the app without deleting your data.
+
+13. Law, disputes and language
+Applicable law determines governing law and court jurisdiction; no exclusive foreign court or mandatory arbitration is imposed. Mandatory protections in your place of residence, including applicable Korean and US consumer protections, remain available. Contact elixirevo@gmail.com to seek resolution; informal discussion is not a prerequisite to legal remedies. English and Korean describe the same obligations. Translation differences do not reduce mandatory rights. Invalid provisions do not invalidate the remainder where legally separable.

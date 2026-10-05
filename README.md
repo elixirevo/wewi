@@ -2,7 +2,7 @@
 
 ![Platform](https://img.shields.io/badge/Platform-macOS-lightgrey.svg)
 ![Swift](https://img.shields.io/badge/Swift-6-orange.svg)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![License](https://img.shields.io/badge/Distribution-GPL--3.0--only-blue.svg)
 
 <img src="./wewi_icons/wewi-iOS-Default-1024x1024@1x.png" alt="wewi Icon" width="160" />
 
@@ -33,33 +33,34 @@ Use it for dashboards, charts, docs, notes, and any URL you want to keep visible
 - Menu bar controls:
   - Open Settings
   - Check for Updates
-  - Enable/disable, reload, delete widgets
+  - Manage Widgets opens the native Features page for enable/disable, reload and delete
 - Auto-save widget settings (`UserDefaults` JSON)
 - Restore each widget browser's saved scroll position after app relaunch
 - Launch at login toggle in Settings
-- Auto-scroll to newly added widget in Widget List
 
 ## 🧭 Usage
 
 1. Launch `wewi.app`
 2. Open **Settings** from menu bar
-3. In **Create New Widget**:
+3. Select **Features**, then **Create New Widget**:
    - Enter Name + URL
    - Select size preset
    - Click **Add Widget**
-4. Manage all widgets in **Widget List** (changes apply immediately)
+4. Manage widgets below the creation form (URL edits apply with **Apply URL** or Return).
 
 ## 🚀 Build
 
 ### Prerequisites
 
 - macOS 13+
-- Xcode Command Line Tools (`xcode-select --install`)
+- Xcode with the macOS 26 or newer SDK (deployment target remains macOS 13)
+- MacAppEssentials checked out at `../tools/library`, including its `Integrations` directory
 
 ### Run (debug)
 
 ```bash
-swift run
+make app
+open dist/wewi.app
 ```
 
 ### Build app bundle
@@ -185,31 +186,57 @@ For maintainers:
 2. Copy `Casks/wewi.rb` into `elixirevo/homebrew-tap` (`Casks/wewi.rb`).
 3. Commit and push the tap update.
 
-## 🧱 Project Structure
+## Shared app essentials
 
-```text
-Sources/wewi/
-  AppDelegate.swift
-  LaunchAtLoginManager.swift
-  MenuBarController.swift
-  SettingsWindowController.swift
-  SettingsView.swift
-  SettingsComponents.swift
-  WidgetConfig.swift
-  WidgetStore.swift
-  WidgetManager.swift
-  WidgetPanelController.swift
-  WidgetChromeView.swift
-  wewi.swift
-scripts/
-  build_app.sh
+Settings, login items, app/status menus, accessory lifecycle, onboarding and versioned
+Terms acceptance use the local MacAppEssentials package. Widget configuration and
+WebKit panels remain app-owned. The original `wewi.widgets.v1` data is preserved.
+The menu's **Manage Widgets…** command opens the Features page. General includes
+language, appearance, login startup and optional diagnostics. Help & Support includes
+onboarding replay, bundled legal documents, licenses and manual diagnostic export.
+
+The first run explains creation, positioning, resizing, scroll restoration, refresh
+and interaction locking, followed by privacy information, explicit Terms agreement
+and optional crash reporting. Incomplete setup can be reopened. Updated Terms use
+an independent agreement window. No widget networking or service startup occurs
+before required acceptance. Restoring defaults only resets appearance.
+
+### Privacy and crash reporting
+
+Widget settings remain local; chosen websites receive browser requests and may
+persist shared WebKit cookies. Sparkle contacts GitHub Releases for updates.
+Sentry Cocoa 9.30.0 is connected through MacAppDiagnosticsSentry to project `wewi`.
+Crash reporting defaults OFF, requires a separate choice and applies on the next
+launch. The public DSN is bundled; management credentials are never bundled.
+The current Sentry organization is on Trial with 90-day error retention (verified
+2026-10-05); recheck before the trial ends or the plan changes.
+The integration disables usage/session/performance tracking and replay, removes
+user/request fields, and enables project IP/sensitive-data scrubbing.
+
+Read the complete English/Korean Terms and Privacy Policy in
+`Sources/wewi/Resources/{en,ko}.lproj/`. Operator/contact: elixirevo /
+elixirevo@gmail.com. These documents adapt the library templates to this app;
+no public legal-document URL is invented. Release owners must confirm applicable
+operator disclosures and actual service retention/transfer obligations before publishing.
+
+### Verification and screenshots
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
+make app
+open -n dist/wewi.app --args --preview --page features -AppleLanguages '(ko)'
+open -n dist/wewi.app --args --preview -AppleLanguages '(en)'
 ```
 
-## 🔒 Privacy
-
-wewi runs locally on your Mac.
-No app telemetry or remote upload is built into the project.
-Sparkle update checks fetch the appcast from GitHub Releases.
+`--preview` isolates preferences in a disposable domain and never starts live widgets,
+login registration, update requests or Sentry. Quit preview instances after testing.
+Use `--page general`, `features`, `updates`, `support` or `about` to inspect settings.
+The onboarding images are actual captures of the app's Features page, with sample
+URLs and no personal data. The packaged executable includes all module resources and
+Sentry's privacy manifest. dSYM output is retained beside the app in `dist/`; release
+CI must upload the matching symbols to Sentry with credentials supplied outside the app.
+Project provisioning/build success does not verify real crash delivery; an authorized
+crash-and-relaunch test and symbolication check are still separate release validation.
 
 ## 🛠 Contributing
 
@@ -218,4 +245,9 @@ Please open an issue first for larger changes.
 
 ## 📄 License
 
-MIT. See `LICENSE`.
+Original wewi source: MIT, see `LICENSE`. MacAppEssentials and its integration
+adapters: GPL-3.0-only. The combined distribution must satisfy GPL-3.0-only,
+including provision of corresponding source for wewi and the exact library version
+used. Sparkle and Sentry retain their own licenses. Bundled notices are in
+`Sources/wewi/Resources/ThirdPartyNotices.txt`. This integration was verified against
+MacAppEssentials 0.5.1, revision `b3e36a462ea6da4ba3d3272c08526765d9aca3c0`.
