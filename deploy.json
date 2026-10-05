@@ -13,5 +13,11 @@
   "sentry": {
     "configuration": "Sources/wewi/Resources/SentryConfiguration.json",
     "bundled_configuration": "Contents/Resources/wewi_wewi.bundle/Contents/Resources/SentryConfiguration.json"
-  }
+  },
+  "extra_feed_command": [
+    "python3",
+    "scripts/prepare_update_feed.py",
+    "{output}",
+    "{tag}"
+  ]
 }
